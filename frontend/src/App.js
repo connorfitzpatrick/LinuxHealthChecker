@@ -3,6 +3,7 @@ import "./App.css";
 import TextBox from "./components/TextBox/textbox";
 import React, { useState } from "react";
 import ServerTab from "./components/ServerTab/serverTab";
+import ServerDetailsTable from "./components/Table/serverDetailsTable";
 
 const App = () => {
   const [results, setResults] = useState(null);
@@ -33,15 +34,20 @@ const App = () => {
         <TextBox onSubmit={handleSubmit} />
       </div>
       {results && (
-        <div className="output-container">
-          {Object.keys(results).map((server) => (
-            <ServerTab
-              key={server}
-              serverName={server}
-              serverInfo={results[server]}
-            />
-          ))}
-        </div>
+        <>
+          <div className="output-container">
+            {Object.keys(results).map((server) => (
+              <ServerTab
+                key={server}
+                serverName={server}
+                serverInfo={results[server]}
+              />
+            ))}
+          </div>
+          <div className="table-container">
+            <ServerDetailsTable serverInfo={results} />
+          </div>
+        </>
       )}
     </div>
   );
