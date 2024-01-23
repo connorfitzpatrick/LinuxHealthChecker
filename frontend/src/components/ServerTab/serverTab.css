@@ -1,0 +1,55 @@
+/* serverTab.css */
+.server-tab {
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.server-tab.checking {
+  border-color: #2a85fc;
+}
+
+.server-tab.healthy {
+  border-color: #008000;
+}
+
+.server-tab.warning {
+  border-color: #800000;
+}
+
+.server-tab.warning {
+  border-color: #a7b304;
+}
+
+.server-tab .tab-header {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  font-weight: bold;
+}
+
+.server-tab .server-info {
+  display: flex;
+  align-items: center;
+  flex-grow: 1; /* Take remaining space */
+  justify-content: space-between; /* Add this line */
+}
+
+.server-tab .server-name {
+  flex-shrink: 0; /* Avoid server name pushing server state to the right */
+  margin-right: 10px;
+}
+
+.server-tab .server-state {
+  margin-left: 10px; /* Adjust this value to your preference */
+}
+
+.server-tab .expand-icon {
+  /* Styles for the expand icon */
+}
+
+.server-tab .tab-details {
+  padding: 10px;
+}
