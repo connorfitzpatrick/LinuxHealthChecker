@@ -44,6 +44,7 @@
 
 .server-tab .server-state {
   margin-left: 10px; /* Adjust this value to your preference */
+  margin-right: 10px;
 }
 
 .server-tab .expand-icon {

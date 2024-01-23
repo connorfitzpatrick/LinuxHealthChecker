@@ -1,6 +1,6 @@
 // ServerTab.js
 import React, { useState } from "react";
-import "./ServerTab.css";
+import "./serverTab.css";
 
 const ServerTab = ({ serverName, serverInfo }) => {
   const [expanded, setExpanded] = useState(false);

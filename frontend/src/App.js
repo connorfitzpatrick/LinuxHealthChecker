@@ -1,8 +1,8 @@
 // App.js
-import "./components/textbox/css/app.css";
-import TextBox from "./components/textbox/textbox";
+import "./App.css";
+import TextBox from "./components/TextBox/textbox";
 import React, { useState } from "react";
-import ServerTab from "./ServerTab";
+import ServerTab from "./components/ServerTab/serverTab";
 
 const App = () => {
   const [results, setResults] = useState(null);
