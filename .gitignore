@@ -4,6 +4,17 @@ node_modules/
 # React build
 /build/
 
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Django
+*.log
+db.sqlite3
+.env
+
 # Visual Studio Code
 .vscode/
 
@@ -27,3 +38,20 @@ id_rsa.pub
 
 # IDE files
 .idea/
+
+# Virtual environments
+venv/
+env/
+
+# Local development settings
+local_settings.py
+
+# Compiled Python files
+*.pyc
+
+# Ignore pipenv virtual environment
+Pipfile
+Pipfile.lock
+
+# Ignore pipenv local repository (needed for pipenv install)
+.pipenv
