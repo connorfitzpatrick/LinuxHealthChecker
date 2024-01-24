@@ -26,6 +26,13 @@ def process_servers(request):
 
         results = process_servers_health(servers)
 
-        return HttpResponse("Servers processed successfully.")
+        response_data = {
+            'message': 'Servers processed successfully.',
+        }
+
     else:
-        return HttpResponse("Invalid HTTP method. Use POST.")
+        response_data = {
+            'message': 'Error: Request could not be processed',
+        }
+
+    return JsonResponse(response_data)
