@@ -1,0 +1,42 @@
+version: "3"
+
+services:
+  server:
+    build:
+      context: .
+    image: linux-server:latest
+    container_name: abcdefgh001
+    ports:
+      - "2201:22"
+
+  server2:
+    build:
+      context: .
+    image: linux-server:latest
+    container_name: abcdefgh002
+    ports:
+      - "2202:22"
+
+  server3:
+    build:
+      context: .
+    image: linux-server:latest
+    container_name: abcdefgh003
+    ports:
+      - "2203:22"
+
+  server4:
+    build:
+      context: .
+    image: linux-server:latest
+    container_name: abcdefgh004
+    ports:
+      - "2204:22"
+
+  server5:
+    build:
+      context: .
+    image: linux-server:latest
+    container_name: abcdefgh005
+    ports:
+      - "2205:22"

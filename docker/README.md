@@ -1,5 +1,5 @@
 - From the /docker directory, create the image:
-  docker build -t server1 .
+  docker build -t linux-server .
 
 - Create key:
   ssh-keygen -t rsa -m PEM -f id_rsa
