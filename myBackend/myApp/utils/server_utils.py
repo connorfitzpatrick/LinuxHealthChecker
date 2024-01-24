@@ -32,6 +32,7 @@ def process_servers_health(server_list):
     port = -1
     username = 'remote_user'
     password = 'password1234'
+    print(server_list)
 
     for server in server_list:
         port = docker_get_host_port(server)
@@ -51,6 +52,8 @@ def process_servers_health(server_list):
             # Capture and print the output
             output = stdout.read().decode('utf-8')
             print(f"Output of '{command}':\n{output}")
+
+            # output = parse_server_health_results(output)
         finally:
             # Close the SSH connection
             client.close()

@@ -11,20 +11,38 @@ const App = () => {
   const handleSubmit = async (serverList) => {
     const serverNames = serverList.split(/\r?\n/);
     const serverResults = {};
+    console.log(serverNames);
+    console.log(JSON.stringify({ serverNames }));
 
-    // Implement logic to send serverList to the Python backend
-    // and update the serverResults object with the response
-    // (You might use the Fetch API or Axios for this)
+    try {
+      const response = await fetch(
+        "http://localhost:8000/myApp/process_servers/",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ serverNames }),
+        }
+      );
 
-    // For now, let's simulate a response for each server
-    serverNames.forEach((server) => {
-      serverResults[server] = {
-        state: "checking",
-        details: `Checking ${server}...`,
-      };
-    });
+      if (!response.ok) {
+        throw new Error("Server error");
+      }
 
-    setResults(serverResults);
+      const responseData = await response.json();
+
+      serverNames.forEach((server) => {
+        serverResults[server] = responseData[server] || {
+          state: "checking",
+          details: `Checking ${server}...`,
+        };
+      });
+
+      setResults(serverResults);
+    } catch (error) {
+      console.error("Error sending POST request:", error);
+    }
   };
 
   return (
