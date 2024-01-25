@@ -29,7 +29,6 @@ def process_servers_health(server_list):
 
     # Init SSH Connection Parameters
     hostname = 'localhost'
-    port = -1
     username = 'remote_user'
     password = 'password1234'
     print(server_list)
@@ -46,8 +45,25 @@ def process_servers_health(server_list):
             client.connect(hostname, port=port, username=username, password=password)
 
             # Run the 'df -i' command
+            # command = 'df -i; cat /etc/os-release'
             command = 'df -i'
             stdin, stdout, stderr = client.exec_command(command)
+            output = stdout.read().decode('utf-8')
+            # process inode usage
+            lines = output.split('\n')
+            try:
+                iuse_percentage = int(lines[1].split()[5].replace('%', ''))
+            except (ValueError, IndexError):
+                # Handle the case where the conversion fails or the index is out of range
+                print("Error processing IUse%. Setting iuse_percentage to a default value.")
+                iuse_percentage = -1
+            if iuse_percentage >= 95:
+                state = 'Warning'
+            else:
+                state = 'Healthy'
+
+            print(state)
+
 
             # Capture and print the output
             output = stdout.read().decode('utf-8')
