@@ -49,25 +49,36 @@ def process_servers_health(server_list):
             command = 'df -i'
             stdin, stdout, stderr = client.exec_command(command)
             output = stdout.read().decode('utf-8')
+            print(output)
             # process inode usage
-            lines = output.split('\n')
-            try:
-                iuse_percentage = int(lines[1].split()[5].replace('%', ''))
-            except (ValueError, IndexError):
-                # Handle the case where the conversion fails or the index is out of range
-                print("Error processing IUse%. Setting iuse_percentage to a default value.")
-                iuse_percentage = -1
-            if iuse_percentage >= 95:
-                state = 'Warning'
-            else:
-                state = 'Healthy'
+            lines = output.split('\n')    
+            header = lines[0]
+            state = 'healthy'
+            unhealthy_filesystems = []
 
+            # Skip header and interate through each filesystem.
+            for line in lines[1:-1]:
+            # Split each line into columns
+                columns = line.split()
+        
+                if len(columns) >= 6:
+                    iuse_percentage_str = columns[4].replace('%', '')
+                    
+                    try:
+                        iuse_percentage = int(iuse_percentage_str)
+                        print(iuse_percentage)
+                    except ValueError:
+                        print(f"Error: Invalid IUse% value - {iuse_percentage_str}")
+                        continue
+                    if iuse_percentage >= 95:
+                        unhealthy_filesystems.append([columns[0], columns[4]])
+                        state = 'Warning'
+                else:
+                    print("Error: Invalid 'df -i' output format")
             print(state)
-
 
             # Capture and print the output
             output = stdout.read().decode('utf-8')
-            print(f"Output of '{command}':\n{output}")
 
             # output = parse_server_health_results(output)
         finally:
