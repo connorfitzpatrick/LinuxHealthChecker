@@ -5,11 +5,32 @@ import docker
 from confluent_kafka import Consumer
 from threading import Lock
 from ..shared_data import server_data
+from concurrent.futures import ThreadPoolExecutor
 import time
+
+server_data_lock = Lock()
+
+def process_server_health_thread(server_name):
+    """
+    This function is a wrapper for the process_server_health function
+    to be used in the ThreadPoolExecutor.
+    """
+    try:
+        print(f"Starting health check for {server_name}")
+        result = process_server_health(server_name)
+        with server_data_lock:
+            server_data[server_name] = result
+        print(f"Completed health check for {server_name}: {result}")
+    except Exception as e:
+        print(f"Exception in process_server_health_thread for {server_name}: {e}")
 
 
 def start_kafka_consumer():
-    server_data_lock = Lock()
+    """
+    Kafka consumer polls for messages from the message_queue topic.
+    """
+    executor = ThreadPoolExecutor(max_workers=10)
+    print("Starting Kafka Consumer")
 
     consumer_config = {
         'bootstrap.servers': 'localhost:9092',
@@ -18,26 +39,28 @@ def start_kafka_consumer():
     }
     consumer = Consumer(consumer_config)
     consumer.subscribe(['message_queue'])
+    
+    try:
+        while True:
+            msg = consumer.poll(1.0)
+            if msg is None:
+                continue
+            if msg.error():
+                print(f"Consumer error: {msg.error()}")
+                continue
 
-    while True:
-        msg = consumer.poll(1.0)
-        if msg is None:
-            continue
-        if msg.error():
-            print(f"Consumer error: {msg.error()}")
-            continue
-        server_name = msg.value().decode('utf-8')
-        result = process_server_health(server_name)
+            server_name = msg.value().decode('utf-8')
 
-        with server_data_lock:
-            server_data[server_name] = result
+            # This is called for every server name (message) received
+            # This submits the process_server_health_thread function 
+            # to a thread in the ThreadPoolExecutor for asynchronous execution
+            executor.submit(process_server_health_thread, server_name)
 
-        # Store or send this result to the frontend
-
-        time.sleep(1)  # Adjust based on processing needs
-
-    consumer.close()
-
+    except Exception as e:
+        print(f"Error in Kafka consumer thread: {e}")
+    finally:
+        consumer.close()
+        executor.shutdown()
 
 def docker_get_host_port(container_name):
     client = docker.from_env()
@@ -62,6 +85,7 @@ def parse_server_health_results(results):
 
 def process_server_health(server):
     results = {}
+    print("Starting the health check processing:")
     print(server_data)
 
     # Init SSH Connection Parameters
@@ -117,7 +141,7 @@ def process_server_health(server):
         results = {
             'state': state,
             'unhealthy_filesystems': unhealthy_filesystems,
-            # 'inodes': output
+            'inodes': output
         }
 
         # output = parse_server_health_results(output)
