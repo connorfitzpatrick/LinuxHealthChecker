@@ -20,9 +20,9 @@ const ServerDetailsTable = ({ serverInfo }) => {
           </tr>
         </thead>
         <tbody>
-          {Object.keys(serverInfo).map((serverName) => (
-            <tr key={serverName}>
-              <td>{serverName}</td>
+          {serverInfo.map((server) => (
+            <tr key={server.serverName}>
+              <td>{server.serverName}</td>
               {/* Add more cells with server information */}
             </tr>
           ))}

@@ -4,20 +4,27 @@ import TextBox from "./components/TextBox/textbox";
 import React, { useEffect, useState } from "react";
 import ServerTab from "./components/ServerTab/serverTab";
 import ServerDetailsTable from "./components/Table/serverDetailsTable";
+import { v4 as uuidv4 } from "uuid";
 
 const App = () => {
   const [results, setResults] = useState([]);
 
   useEffect(() => {
+    setResults([]);
+    console.log("USE EFFECT RUNNING");
     // Establish a connection to the SSE endpoint when the component mounts
+    const connectionId = uuidv4();
+
     const eventSource = new EventSource(
-      "http://localhost:8000/myApp/process_servers/"
+      `http://localhost:8000/myApp/process_servers/?id=${connectionId}`
     );
 
     eventSource.onmessage = (event) => {
       const eventData = JSON.parse(event.data);
       setResults((prevResults) => [...prevResults, eventData]);
+      console.log(results);
     };
+    console.log(results.length);
 
     console.log(eventSource);
     // Event listener for incoming messages
@@ -30,21 +37,27 @@ const App = () => {
       console.error("EventSource error:", error);
       console.error("ReadyState:", eventSource.readyState);
       // readyState values: 0-CONNECTING, 1-OPEN, 2-CLOSED
-      // eventSource.close();
+      eventSource.close();
     };
 
     // Clean up event source when the component unmounts
-    // return () => {
-    //   console.log("Closing");
-    //   eventSource.close();
-    // };
+    return () => {
+      console.log("Closing Eventsource");
+      eventSource.close();
+    };
   }, []);
 
   const handleSubmit = async (serverList) => {
     const serverNames = serverList.split(/\r?\n/);
-    const serverResults = {};
+    const serverResults = serverNames.map((server) => ({
+      serverName: server,
+      status: "checking",
+      details: `Checking ${server}...`,
+    }));
+    console.log(serverResults);
     console.log(serverNames);
     console.log(JSON.stringify({ serverNames }));
+    console.log(results.length);
 
     try {
       const response = await fetch(
@@ -64,15 +77,6 @@ const App = () => {
         throw new Error("Server error");
       }
 
-      const responseData = await response.json();
-
-      serverNames.forEach((server) => {
-        serverResults[server] = responseData[server] || {
-          state: "checking",
-          details: `Checking ${server}...`,
-        };
-      });
-
       setResults(serverResults);
     } catch (error) {
       console.error("Error sending POST request:", error);
@@ -86,14 +90,14 @@ const App = () => {
       <div className="container">
         <TextBox onSubmit={handleSubmit} />
       </div>
-      {results && (
+      {results.length > 0 && (
         <>
           <div className="output-container">
-            {Object.keys(results).map((server) => (
+            {results.map((server) => (
               <ServerTab
-                key={server}
-                serverName={server}
-                serverInfo={results[server]}
+                key={server.serverName}
+                serverName={server.serverName}
+                serverInfo={server}
               />
             ))}
           </div>

@@ -19,8 +19,12 @@ def process_server_health_thread(server_name):
         print(f"Starting health check for {server_name}")
         result = process_server_health(server_name)
         with server_data_lock:
-            server_data[server_name] = result
+            server_data[server_name] = {
+                'status': result,
+                'last_updated': time.time()  # Current timestamp
+            }
         print(f"Completed health check for {server_name}: {result}")
+        print(server_data)
     except Exception as e:
         print(f"Exception in process_server_health_thread for {server_name}: {e}")
 
@@ -86,7 +90,6 @@ def parse_server_health_results(results):
 def process_server_health(server):
     results = {}
     print("Starting the health check processing:")
-    print(server_data)
 
     # Init SSH Connection Parameters
     hostname = 'localhost'
