@@ -8,15 +8,18 @@ import { v4 as uuidv4 } from "uuid";
 
 const App = () => {
   const [results, setResults] = useState([]);
-
+  const [connectionId, setConnectionId] = useState(null);
   useEffect(() => {
+    console.log("loading");
+    const newConnectionId = uuidv4();
+    setConnectionId(newConnectionId);
     setResults([]);
     console.log("USE EFFECT RUNNING");
     // Establish a connection to the SSE endpoint when the component mounts
-    const connectionId = uuidv4();
+    // const connectionId = uuidv4();
 
     const eventSource = new EventSource(
-      `http://localhost:8000/myApp/process_servers/?id=${connectionId}`
+      `http://localhost:8000/myApp/process_servers/?X-Connection-ID=${newConnectionId}`
     );
 
     eventSource.onmessage = (event) => {
@@ -66,6 +69,7 @@ const App = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "X-Connection-ID": connectionId,
           },
           body: JSON.stringify({ serverNames }),
         }

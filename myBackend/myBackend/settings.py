@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
+from corsheaders.defaults import default_headers
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -63,6 +64,10 @@ CORS_ORIGIN_WHITELIST = [
     "http://127.0.0.1", 
     "http://localhost:3000", 
     "http://localhost"
+]
+
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    'X-Connection-ID',
 ]
 
 ALLOWED_HOSTS = ['*', 

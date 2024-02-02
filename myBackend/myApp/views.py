@@ -9,6 +9,7 @@ from uuid import uuid4
 from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 from .utils.server_utils import parse_server_health_results, process_server_health
 from confluent_kafka import Producer
 from .utils.server_utils import start_kafka_consumer
@@ -27,8 +28,10 @@ consumer_thread = Thread(target=start_kafka_consumer, daemon=True)
 connection_states = {}
 
 @csrf_exempt
+@require_http_methods(["GET", "POST"])
 def process_servers(request):
-    connection_id = request.GET.get('id', str(uuid4()))
+    # connection_id = request.headers.get('X-Connection-ID')
+    connection_id = request.META.get('HTTP_X_CONNECTION_ID', str(uuid4()))
 
     if request.method == 'POST':
         data = json.loads(request.body.decode('utf-8'))
@@ -50,6 +53,14 @@ def process_servers(request):
         return JsonResponse({'message': 'Server processing started'}, status=200)
 
     elif request.method == 'GET':
+        if connection_id not in connection_states:
+            connection_states[connection_id] = {
+                'servers': [], 
+                'last_updates': {}, 
+                'all_results_sent': False
+            }
+
+        # connection_id = request.GET.get('X-Connection-ID')
         # Return the SSE response
         return StreamingHttpResponse(streaming_content=server_events(connection_id), content_type='text/event-stream')
 
@@ -62,6 +73,8 @@ def server_events(connection_id):
     
     while True:
         connection_state = connection_states.get(connection_id)
+        # print("Connection State")
+        # print(connection_state)
         if not connection_state:
             print(f"Connection state not found for {connection_id}, exiting server_events")
             break
@@ -70,8 +83,11 @@ def server_events(connection_id):
         for server in connection_state['servers']:
             last_update = connection_state['last_updates'].get(server)
             server_update = server_data.get(server)
+            print("SERVER UPDATE")
+            print(server_update)
 
             if server_update and last_update < server_update['last_updated']:
+                print("RETURNING RESULTS")
                 event_data = {'server': server, 'status': server_update['status']}
                 yield f"data: {json.dumps(event_data)}\n\n"
                 connection_state['last_updates'][server] = server_update['last_updated']
