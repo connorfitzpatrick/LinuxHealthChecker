@@ -10,58 +10,12 @@ const App = () => {
   const [results, setResults] = useState([]);
   const [connectionId, setConnectionId] = useState(null);
   useEffect(() => {
-    console.log("loading");
     const newConnectionId = uuidv4();
     setConnectionId(newConnectionId);
-    setResults([]);
-    console.log("USE EFFECT RUNNING");
-    // Establish a connection to the SSE endpoint when the component mounts
-    // const connectionId = uuidv4();
-
-    const eventSource = new EventSource(
-      `http://localhost:8000/myApp/process_servers/?X-Connection-ID=${newConnectionId}`
-    );
-
-    eventSource.onmessage = (event) => {
-      const eventData = JSON.parse(event.data);
-      setResults((prevResults) => [...prevResults, eventData]);
-      console.log(results);
-    };
-    console.log(results.length);
-
-    console.log(eventSource);
-    // Event listener for incoming messages
-    eventSource.onopen = () => {
-      console.log("SSE connection opened");
-    };
-
-    // Event listener for errors
-    eventSource.onerror = (error) => {
-      console.error("EventSource error:", error);
-      console.error("ReadyState:", eventSource.readyState);
-      // readyState values: 0-CONNECTING, 1-OPEN, 2-CLOSED
-      eventSource.close();
-    };
-
-    // Clean up event source when the component unmounts
-    return () => {
-      console.log("Closing Eventsource");
-      eventSource.close();
-    };
   }, []);
 
   const handleSubmit = async (serverList) => {
     const serverNames = serverList.split(/\r?\n/);
-    const serverResults = serverNames.map((server) => ({
-      serverName: server,
-      status: "checking",
-      details: `Checking ${server}...`,
-    }));
-    console.log(serverResults);
-    console.log(serverNames);
-    console.log(JSON.stringify({ serverNames }));
-    console.log(results.length);
-
     try {
       const response = await fetch(
         "http://localhost:8000/myApp/process_servers/",
@@ -69,22 +23,52 @@ const App = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            // Send connection ID in headers
             "X-Connection-ID": connectionId,
           },
           body: JSON.stringify({ serverNames }),
         }
       );
-      console.log(response);
-      console.log(response.body);
 
       if (!response.ok) {
         throw new Error("Server error");
       }
 
-      setResults(serverResults);
+      // Initialize results state with server names after successful POST
+      const initialResults = serverNames.map((serverName) => ({
+        serverName,
+        status: "checking",
+        details: `Checking ${serverName}...`,
+      }));
+      setResults(initialResults);
+
+      // Establish an EventSource connection for receiving server events
+      const eventSource = new EventSource(
+        `http://localhost:8000/myApp/process_servers/?id=${connectionId}`
+      );
+
+      eventSource.onmessage = (event) => {
+        const eventData = JSON.parse(event.data);
+        setResults((prevResults) =>
+          prevResults.map((server) =>
+            server.serverName === eventData.serverName
+              ? { ...server, ...eventData }
+              : server
+          )
+        );
+      };
+
+      eventSource.onerror = (error) => {
+        console.error("EventSource error:", error);
+        eventSource.close();
+      };
+
+      // Clean up EventSource when component unmounts or connectionId changes
+      return () => {
+        eventSource.close();
+      };
     } catch (error) {
       console.error("Error sending POST request:", error);
-      console.log(error);
     }
   };
 

@@ -11,28 +11,30 @@ import time
 server_data_lock = Lock()
 
 def process_server_health_thread(server_name):
-    """
+    '''
     This function is a wrapper for the process_server_health function
     to be used in the ThreadPoolExecutor.
-    """
+    '''
     try:
         print(f"Starting health check for {server_name}")
         result = process_server_health(server_name)
         with server_data_lock:
+            # Update server_data with health check results
             server_data[server_name] = {
+                # health check results
                 'status': result,
-                'last_updated': time.time()  # Current timestamp
+                # current timestamp
+                'last_updated': time.time()
             }
         print(f"Completed health check for {server_name}: {result}")
-        print(server_data)
     except Exception as e:
         print(f"Exception in process_server_health_thread for {server_name}: {e}")
 
 
 def start_kafka_consumer():
-    """
+    '''
     Kafka consumer polls for messages from the message_queue topic.
-    """
+    '''
     executor = ThreadPoolExecutor(max_workers=10)
     print("Starting Kafka Consumer")
 
@@ -67,6 +69,11 @@ def start_kafka_consumer():
         executor.shutdown()
 
 def docker_get_host_port(container_name):
+    '''
+    Since I am using a bunch of docker containers to simulate having several Linux servers on
+    my network, I need this function to ask docker what port that specific container resides
+    on. This is more for dev purposes.
+    '''
     client = docker.from_env()
     try:
         container = client.containers.get(container_name)
@@ -82,10 +89,10 @@ def docker_get_host_port(container_name):
     except docker.errors.NotFound:
         print(f"Container '{container_name}' not found.")
 
-def parse_server_health_results(results):
-    parsed_results = {}
-    # Parsing logic will go here
-    return parsed_results
+# def parse_server_health_results(results):
+#     parsed_results = {}
+#     # Parsing logic will go here
+#     return parsed_results
 
 def process_server_health(server):
     results = {}
@@ -147,7 +154,6 @@ def process_server_health(server):
             'inodes': output
         }
 
-        # output = parse_server_health_results(output)
     finally:
         # Close the SSH connection
         client.close()

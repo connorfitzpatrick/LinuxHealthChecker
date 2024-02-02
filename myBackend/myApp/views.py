@@ -16,92 +16,109 @@ from .utils.server_utils import start_kafka_consumer
 from threading import Thread
 from .shared_data import server_data
 
-# Kafka configuration 
+# Kafka configuration for message queue configuration
 kafka_config = {'bootstrap.servers': 'localhost:9092'}
 topic_name = 'message_queue'
 
-# Kafka producer instance
+# Initialize Kafka producer to send messages to the topic
 producer = Producer(kafka_config)
+# Initialize a background thread to consume messages from Kafka
 consumer_thread = Thread(target=start_kafka_consumer, daemon=True)
 
-# Dictionary to store the state of each connection
+# GLOBAL dictionary for maintaining the state of each connection with a unique ID 
 connection_states = {}
 
 @csrf_exempt
-@require_http_methods(["GET", "POST"])
 def process_servers(request):
-    # connection_id = request.headers.get('X-Connection-ID')
-    connection_id = request.META.get('HTTP_X_CONNECTION_ID', str(uuid4()))
-
+    '''
+    Handles requests to initiate health checks or stream healthcheck results
+    '''
+    ### POST ###
     if request.method == 'POST':
+        # Extract UUID from header
+        connection_id = request.META.get('HTTP_X_CONNECTION_ID')
+
+        # Grab server list from request body
         data = json.loads(request.body.decode('utf-8'))
         servers = data.get('serverNames', [])
-        print(servers)
 
         # Initialize the state for this connection
         connection_states[connection_id] = {
+            # list of servers
             'servers': servers,
+            # timestamp of when health check results were obtained for each server
             'last_updates': {server: 0 for server in servers},
-            'all_results_sent': False
+            # indicates if all health check results were returned to client
+            'all_results_sent': False       
         }
 
-        # Update the server data
+        # Send each server name to the Kafka topic for processing
         for server in servers:
             producer.produce(topic_name, server)
             producer.flush()
 
         return JsonResponse({'message': 'Server processing started'}, status=200)
-
+    
+    ### GET ###
     elif request.method == 'GET':
+        # Extract UUID from header
+        connection_id = request.GET.get('id')
+        # Ensure connection_id was already initialized in the POST request
         if connection_id not in connection_states:
-            connection_states[connection_id] = {
-                'servers': [], 
-                'last_updates': {}, 
-                'all_results_sent': False
-            }
-
-        # connection_id = request.GET.get('X-Connection-ID')
-        # Return the SSE response
-        return StreamingHttpResponse(streaming_content=server_events(connection_id), content_type='text/event-stream')
+            return JsonResponse({'error': 'Connection not initialized'}, status=400)
+        # Stream results to client
+        return StreamingHttpResponse(server_events(connection_id, connection_states), content_type='text/event-stream')
 
     else:
         return JsonResponse({'message': 'Error: Request could not be processed'}, status=405)
 
-def server_events(connection_id):
+def server_events(connection_id, connection_states):
+    '''
+    Generator function for streaming health check results to client
+    '''
+    # Access the global server_data updated by Kafka consumer
     global server_data
-    print("Starting server events for connection:", connection_id)
-    
+
+    # parameters to dictate timeout
+    start_time = time.time()
+    timeout = 120
+
+    # Assume all servers are updated unless proven otherwise
     while True:
-        connection_state = connection_states.get(connection_id)
-        # print("Connection State")
-        # print(connection_state)
-        if not connection_state:
-            print(f"Connection state not found for {connection_id}, exiting server_events")
-            break
-
-        all_results_sent = True
-        for server in connection_state['servers']:
-            last_update = connection_state['last_updates'].get(server)
+        all_servers_updated = True
+        for server in connection_states[connection_id]['servers']:
+            # time server's HC results were either initialized or updated
+            last_update = connection_states[connection_id]['last_updates'].get(server, 0)
+            # time the health check was finished
             server_update = server_data.get(server)
-            print("SERVER UPDATE")
-            print(server_update)
+            
+            if not server_update:
+                # If server_update is None, it means we haven't received an update yet
+                all_servers_updated = False
+                continue
 
-            if server_update and last_update < server_update['last_updated']:
-                print("RETURNING RESULTS")
+            # If the health check has been completed and not yet sent to client...
+            # Send the results of it to the client
+            if last_update < server_update['last_updated']:
                 event_data = {'server': server, 'status': server_update['status']}
                 yield f"data: {json.dumps(event_data)}\n\n"
-                connection_state['last_updates'][server] = server_update['last_updated']
-                all_results_sent = False
+                connection_states[connection_id]['last_updates'][server] = server_update['last_updated']
+                all_servers_updated = False
 
-        if all_results_sent:
-            connection_state['all_results_sent'] = True
+        # If all server updated, end stream
+        if all_servers_updated:
+            print("All servers updated. Ending stream.")
+            yield "data: {\"message\": \"All servers updated\"}\n\n"
+            break
 
-        if connection_state['all_results_sent']:
-            print(f"All results sent for {connection_id}, exiting server_events")
+        # If timeout limit exceeded, end stream
+        if time.time() - start_time > timeout:
+            print("Timeout reached. Ending stream.")
+            yield "data: {\"message\": \"Timeout reached\"}\n\n"
             break
 
         time.sleep(1)
-
+    
+    # Clean up by removing connection state to free resources
     if connection_id in connection_states:
         del connection_states[connection_id]
-
