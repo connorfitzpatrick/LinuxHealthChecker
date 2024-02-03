@@ -10,11 +10,11 @@ const ServerTab = ({ serverName, serverInfo }) => {
   };
 
   return (
-    <div className={`server-tab ${serverInfo.state}`}>
+    <div className={`server-tab ${serverInfo.overall_state}`}>
       <div className="tab-header" onClick={toggleExpand}>
         <div className="server-info">
           <span className="server-name">{serverName}</span>
-          <span className="server-state">{serverInfo.state}</span>
+          <span className="server-state">{serverInfo.overall_state}</span>
         </div>
         <span className="expand-icon">{expanded ? "▼ " : "► "}</span>
       </div>

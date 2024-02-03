@@ -7,19 +7,19 @@
   cursor: pointer;
 }
 
-.server-tab.checking {
+/* .server-tab.Checking {
   border-color: #2a85fc;
-}
+} */
 
-.server-tab.healthy {
+.server-tab.Healthy {
   border-color: #008000;
 }
 
-.server-tab.warning {
+.server-tab.Error {
   border-color: #800000;
 }
 
-.server-tab.warning {
+.server-tab.Warning {
   border-color: #a7b304;
 }
 

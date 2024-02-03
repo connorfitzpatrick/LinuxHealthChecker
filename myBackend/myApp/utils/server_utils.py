@@ -4,17 +4,23 @@ import paramiko
 import docker
 from confluent_kafka import Consumer
 from threading import Lock
-from ..shared_data import server_data
+from ..shared_data import server_data, server_data_lock
 from concurrent.futures import ThreadPoolExecutor
 import time
+import logging
+from threading import current_thread
 
-server_data_lock = Lock()
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(threadName)s] %(message)s')
+logger = logging.getLogger(__name__)
+
 
 def process_server_health_thread(server_name):
     '''
     This function is a wrapper for the process_server_health function
     to be used in the ThreadPoolExecutor.
     '''
+    global server_data
+    global server_data_lock
     try:
         print(f"Starting health check for {server_name}")
         result = process_server_health(server_name)
@@ -26,6 +32,10 @@ def process_server_health_thread(server_name):
                 # current timestamp
                 'last_updated': time.time()
             }
+        logger.info("process_server_health_thread")
+
+        print("SERVERDATA")
+        print(server_data)
         print(f"Completed health check for {server_name}: {result}")
     except Exception as e:
         print(f"Exception in process_server_health_thread for {server_name}: {e}")
@@ -89,10 +99,10 @@ def docker_get_host_port(container_name):
     except docker.errors.NotFound:
         print(f"Container '{container_name}' not found.")
 
-# def parse_server_health_results(results):
-#     parsed_results = {}
-#     # Parsing logic will go here
-#     return parsed_results
+def parse_server_health_results(results):
+    # Parsing logic will go here
+    parsed_results = {}
+    return parsed_results
 
 def process_server_health(server):
     results = {}
@@ -149,9 +159,23 @@ def process_server_health(server):
         print(state)
 
         results = {
-            'state': state,
-            'unhealthy_filesystems': unhealthy_filesystems,
-            'inodes': output
+            'overall_state': 'Healthy',
+            'os_info': {
+                'operating_system_name': '',
+            },
+            'inode_info': {
+                'inode_health_status': state,
+                'unhealthy_filesystems': unhealthy_filesystems,
+                'inode_data': output,
+            },
+            'filesystem_info': {
+                'filesystem_health': '',
+                'unhealthy_filesystems': [],
+                'filesystem_data': '',
+            },
+            'ntp_info': {
+                'ntp_health_status': '',
+            },
         }
 
     finally:

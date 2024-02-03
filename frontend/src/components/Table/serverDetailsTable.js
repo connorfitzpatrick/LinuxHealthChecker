@@ -23,7 +23,13 @@ const ServerDetailsTable = ({ serverInfo }) => {
           {serverInfo.map((server) => (
             <tr key={server.serverName}>
               <td>{server.serverName}</td>
-              {/* Add more cells with server information */}
+              <td>{server.status.overall_state}</td>
+              <td>{}</td>
+              <td>{}</td>
+              <td>{}</td>
+              <td>{}</td>
+              <td>{}</td>
+              <td>{}</td>
             </tr>
           ))}
         </tbody>

@@ -37,8 +37,25 @@ const App = () => {
       // Initialize results state with server names after successful POST
       const initialResults = serverNames.map((serverName) => ({
         serverName,
-        status: "checking",
-        details: `Checking ${serverName}...`,
+        status: {
+          overall_state: "Loading",
+          os_info: {
+            operating_system_name: "",
+          },
+          inode_info: {
+            inode_health_status: "",
+            unhealthy_filesystems: [],
+            inode_data: "",
+          },
+          filesystem_info: {
+            filesystem_health: "",
+            unhealthy_filesystems: [],
+            filesystem_data: "",
+          },
+          ntp_info: {
+            ntp_health_status: "",
+          },
+        },
       }));
       setResults(initialResults);
 
@@ -49,13 +66,19 @@ const App = () => {
 
       eventSource.onmessage = (event) => {
         const eventData = JSON.parse(event.data);
+        console.log(eventData);
         setResults((prevResults) =>
           prevResults.map((server) =>
             server.serverName === eventData.serverName
-              ? { ...server, ...eventData }
+              ? {
+                  ...server,
+                  status: eventData.data.status,
+                }
               : server
           )
         );
+        console.log("updated results");
+        console.log(results);
       };
 
       eventSource.onerror = (error) => {
@@ -85,7 +108,7 @@ const App = () => {
               <ServerTab
                 key={server.serverName}
                 serverName={server.serverName}
-                serverInfo={server}
+                serverInfo={server.status}
               />
             ))}
           </div>

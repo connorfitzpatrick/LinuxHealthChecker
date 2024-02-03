@@ -12,5 +12,8 @@ class MyappConfig(AppConfig):
     name = 'myApp'
 
     def ready(self):
-        consumer_thread = Thread(target=start_kafka_consumer, daemon=True) 
+        from .views import consumer_thread
         consumer_thread.start()
+
+        # consumer_thread = Thread(target=start_kafka_consumer, daemon=True) 
+        # consumer_thread.start()
