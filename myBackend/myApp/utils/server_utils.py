@@ -20,18 +20,20 @@ def get_server_data(server_name):
     data = cache.get(server_name)
     return json.loads(data) if data else {}
 
-def process_server_health_thread(server_name):
+def process_server_health_thread(server_name, connection_id):
     try:
         print(f"Starting health check for {server_name}")
         # Simulate the health check process
         # result = {"status": "Healthy", "last_updated": time.time()}
         result = process_server_health(server_name)
         data = {
+            'server_name': server_name,
             'status': result,
             'last_updated': time.time(),
         }
+        cache_key = connection_id + "-" + server_name
         # Update server_data in Redis
-        cache.set(server_name, data, timeout=None)
+        cache.set(cache_key, data, timeout=None)
         print(f"Completed health check for {server_name}: {result}")
     except Exception as e:
         print(f"Exception in process_server_health_thread for {server_name}: {e}")
@@ -61,12 +63,15 @@ def start_kafka_consumer():
                 print(f"Consumer error: {msg.error()}")
                 continue
 
-            server_name = msg.value().decode('utf-8')
+            # Decode the message value from bytes to string, then load it as JSON
+            message_data = json.loads(msg.value().decode('utf-8'))
+            connection_id = message_data['connection_id']
+            server_name = message_data['server']
 
             # This is called for every server name (message) received
             # This submits the process_server_health_thread function 
             # to a thread in the ThreadPoolExecutor for asynchronous execution
-            executor.submit(process_server_health_thread, server_name)
+            executor.submit(process_server_health_thread, server_name, connection_id)
 
     except Exception as e:
         print(f"Error in Kafka consumer thread: {e}")

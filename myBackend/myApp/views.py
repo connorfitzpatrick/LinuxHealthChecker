@@ -59,7 +59,8 @@ def process_servers(request):
 
         # Send each server name to the Kafka topic for processing
         for server in servers:
-            producer.produce(topic_name, server)
+            message = json.dumps({'connection_id': connection_id, 'server': server})
+            producer.produce(topic_name, message)
             producer.flush()
 
         return JsonResponse({'message': 'Server processing started'}, status=200)
@@ -87,7 +88,8 @@ def server_events(connection_id, connection_states):
             # Retrieve the last update time for this server from the connection state
             last_update = connection_states[connection_id]['last_updates'].get(server, 0)
             # Retrieve the server update from Redis
-            server_update = cache.get(server)
+            cache_key = connection_id + "-" + server
+            server_update = cache.get(cache_key)
             print(server_update)
 
             if server_update and last_update < server_update['last_updated']:
