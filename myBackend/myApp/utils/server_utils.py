@@ -9,33 +9,29 @@ from concurrent.futures import ThreadPoolExecutor
 import time
 import logging
 from threading import current_thread
+from django.core.cache import cache
+import json
+from django.core.cache import cache
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(threadName)s] %(message)s')
 logger = logging.getLogger(__name__)
 
+def get_server_data(server_name):
+    data = cache.get(server_name)
+    return json.loads(data) if data else {}
 
 def process_server_health_thread(server_name):
-    '''
-    This function is a wrapper for the process_server_health function
-    to be used in the ThreadPoolExecutor.
-    '''
-    global server_data
-    global server_data_lock
     try:
         print(f"Starting health check for {server_name}")
+        # Simulate the health check process
+        # result = {"status": "Healthy", "last_updated": time.time()}
         result = process_server_health(server_name)
-        with server_data_lock:
-            # Update server_data with health check results
-            server_data[server_name] = {
-                # health check results
-                'status': result,
-                # current timestamp
-                'last_updated': time.time()
-            }
-        logger.info("process_server_health_thread")
-
-        print("SERVERDATA")
-        print(server_data)
+        data = {
+            'status': result,
+            'last_updated': time.time(),
+        }
+        # Update server_data in Redis
+        cache.set(server_name, data, timeout=None)
         print(f"Completed health check for {server_name}: {result}")
     except Exception as e:
         print(f"Exception in process_server_health_thread for {server_name}: {e}")
@@ -130,7 +126,7 @@ def process_server_health(server):
         command = 'df -i'
         stdin, stdout, stderr = client.exec_command(command)
         output = stdout.read().decode('utf-8')
-        print(output)
+        # print(output)
         # process inode usage
         lines = output.split('\n')
         header = lines[0]
@@ -147,7 +143,6 @@ def process_server_health(server):
                 
                 try:
                     iuse_percentage = int(iuse_percentage_str)
-                    print(iuse_percentage)
                 except ValueError:
                     print(f"Error: Invalid IUse% value - {iuse_percentage_str}")
                     continue
