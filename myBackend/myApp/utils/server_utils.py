@@ -135,7 +135,7 @@ def process_server_health(server):
         # process inode usage
         lines = output.split('\n')
         header = lines[0]
-        state = 'healthy'
+        state = 'Healthy'
         unhealthy_filesystems = []
 
         # Skip header and interate through each filesystem.

@@ -14,6 +14,10 @@ const App = () => {
     setConnectionId(newConnectionId);
   }, []);
 
+  useEffect(() => {
+    console.log("Results updated:", results);
+  }, [results]);
+
   const handleSubmit = async (serverList) => {
     const serverNames = serverList.split(/\r?\n/);
     try {
@@ -43,7 +47,7 @@ const App = () => {
             operating_system_name: "",
           },
           inode_info: {
-            inode_health_status: "",
+            inode_health_status: "F",
             unhealthy_filesystems: [],
             inode_data: "",
           },
@@ -69,16 +73,15 @@ const App = () => {
         console.log(eventData);
         setResults((prevResults) =>
           prevResults.map((server) =>
-            server.serverName === eventData.serverName
+            server.serverName === eventData.server
               ? {
                   ...server,
-                  status: eventData.data.status,
+                  status: eventData.status,
                 }
               : server
           )
         );
-        console.log("updated results");
-        console.log(results);
+        console.log(eventData);
       };
 
       eventSource.onerror = (error) => {

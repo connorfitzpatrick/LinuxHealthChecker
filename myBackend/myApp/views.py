@@ -101,7 +101,7 @@ def server_events(connection_id, connection_states):
 
         if all_servers_updated:
             print("All Servers are checked. Closing session")
-            yield "data: {\"message\": \"All servers updated\"}\n\n"
+            # yield "data: {\"message\": \"All servers updated\"}\n\n"
             break
 
         if time.time() - start_time > timeout:
