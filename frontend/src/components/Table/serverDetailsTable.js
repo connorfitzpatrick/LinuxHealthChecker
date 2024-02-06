@@ -26,7 +26,7 @@ const ServerDetailsTable = ({ serverInfo }) => {
               <td>{server.status.overall_state}</td>
               <td>{}</td>
               <td>{server.status.inode_info.inode_health_status}</td>
-              <td>{}</td>
+              <td>{server.status.filesystem_info.filesystem_health_status}</td>
               <td>{}</td>
               <td>{}</td>
               <td>{}</td>

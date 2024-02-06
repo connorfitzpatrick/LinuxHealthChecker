@@ -100,13 +100,92 @@ def docker_get_host_port(container_name):
     except docker.errors.NotFound:
         print(f"Container '{container_name}' not found.")
 
-def parse_server_health_results(results):
+def parse_inode_health_results(inode_output):
+    lines = inode_output[0].split('\n')
+    # print(lines)
+    state = 'Healthy'
+    unhealthy_filesystems = []
+
+    # Skip header and interate through each filesystem.
+    for line in lines[1:-1]:
+    # Split each line into columns
+        columns = line.split()
+
+        if len(columns) >= 6:
+            iuse_percentage_str = columns[4].replace('%', '')
+            
+            try:
+                iuse_percentage = int(iuse_percentage_str)
+            except ValueError:
+                print(f"Error: Invalid IUse% value - {iuse_percentage_str}")
+                continue
+            if iuse_percentage >= 95:
+                unhealthy_filesystems.append([columns[0], columns[4]])
+                state = 'Warning'
+        else:
+            print("Error: Invalid 'df -i' output format")
+    
+    return (state, unhealthy_filesystems, inode_output)
+
+def parse_filesystem_health_results(filesystem_output):
+    lines = filesystem_output[1].split('\n')
+    print(lines)
+    state = 'Healthy'
+    unhealthy_filesystems = []
+
+    # Skip header and interate through each filesystem.
+    for line in lines[1:-1]:
+    # Split each line into columns
+        columns = line.split()
+
+        if len(columns) >= 6:
+            fuse_percentage_str = columns[4].replace('%', '')
+            
+            try:
+                iuse_percentage = int(fuse_percentage_str)
+            except ValueError:
+                print(f"Error: Invalid FUse% value - {fuse_percentage_str}")
+                continue
+            if iuse_percentage >= 95:
+                unhealthy_filesystems.append([columns[0], columns[4]])
+                state = 'Warning'
+        else:
+            print("Error: Invalid 'df -h' output format")
+    
+    return (state, unhealthy_filesystems, filesystem_output)
+
+def parse_server_health_results(outputs):
     # Parsing logic will go here
-    parsed_results = {}
-    return parsed_results
+    results = {}
+
+    # parse inode health
+    inode_health_results = parse_inode_health_results(outputs[0])
+    # parse filesystem health
+    filesystem_health_results = parse_filesystem_health_results(outputs[1])
+
+    results = {
+        'overall_state': 'Healthy',
+        'os_info': {
+            'operating_system_name': '',
+        },
+        'inode_info': {
+            'inode_health_status': inode_health_results[0],
+            'unhealthy_filesystems': inode_health_results[1],
+            'inode_data': inode_health_results[2],
+        },
+        'filesystem_info': {
+            'filesystem_health_status': filesystem_health_results[0],
+            'unhealthy_filesystems': filesystem_health_results[1],
+            'filesystem_data': filesystem_health_results[2],
+        },
+        'ntp_info': {
+            'ntp_health_status': '',
+        },
+    }
+
+    return results
 
 def process_server_health(server):
-    results = {}
     print("Starting the health check processing:")
 
     # Init SSH Connection Parameters
@@ -128,56 +207,28 @@ def process_server_health(server):
 
         # Run the 'df -i' command
         # command = 'df -i; cat /etc/os-release'
-        command = 'df -i'
+        # command = 'df -i'
+        commands = (
+            'df -i',
+            'df -h',
+        )
+        delimiter = "END_OF_COMMAND_OUTPUT"
+        command = '; echo "{}"; '.format(delimiter).join(commands) + '; echo "{}"'.format(delimiter)
         stdin, stdout, stderr = client.exec_command(command)
         output = stdout.read().decode('utf-8')
-        # print(output)
-        # process inode usage
-        lines = output.split('\n')
-        header = lines[0]
-        state = 'Healthy'
-        unhealthy_filesystems = []
+        print("OUTPUT:")
+        print("")
 
-        # Skip header and interate through each filesystem.
-        for line in lines[1:-1]:
-        # Split each line into columns
-            columns = line.split()
+        # Split output with delimiter to get a list of command outputs
+        # outputs[0] = inodes
+        # outputs[1] = filesystems
+        outputs = output.split(delimiter)
+        # Strip each output to remove leading + trailing whitespace
+        outputs = [o.strip() for o in outputs if o.strip()]
+
+        # parse output
+        results = parse_server_health_results(outputs)
     
-            if len(columns) >= 6:
-                iuse_percentage_str = columns[4].replace('%', '')
-                
-                try:
-                    iuse_percentage = int(iuse_percentage_str)
-                except ValueError:
-                    print(f"Error: Invalid IUse% value - {iuse_percentage_str}")
-                    continue
-                if iuse_percentage >= 95:
-                    unhealthy_filesystems.append([columns[0], columns[4]])
-                    state = 'Warning'
-            else:
-                print("Error: Invalid 'df -i' output format")
-        print(state)
-
-        results = {
-            'overall_state': 'Healthy',
-            'os_info': {
-                'operating_system_name': '',
-            },
-            'inode_info': {
-                'inode_health_status': state,
-                'unhealthy_filesystems': unhealthy_filesystems,
-                'inode_data': output,
-            },
-            'filesystem_info': {
-                'filesystem_health': '',
-                'unhealthy_filesystems': [],
-                'filesystem_data': '',
-            },
-            'ntp_info': {
-                'ntp_health_status': '',
-            },
-        }
-
     finally:
         # Close the SSH connection
         client.close()

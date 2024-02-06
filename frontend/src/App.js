@@ -52,7 +52,7 @@ const App = () => {
             inode_data: "",
           },
           filesystem_info: {
-            filesystem_health: "",
+            filesystem_health_status: "",
             unhealthy_filesystems: [],
             filesystem_data: "",
           },
