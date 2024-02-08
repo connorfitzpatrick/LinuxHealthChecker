@@ -1,7 +1,7 @@
 /* serverTab.css */
 .server-tab {
   background-color: #f0f0f0;
-  border: 1px solid #ccc;
+  border: 2px solid #ccc;
   border-radius: 5px;
   margin-bottom: 10px;
   cursor: pointer;
@@ -33,17 +33,19 @@
 .server-tab .server-info {
   display: flex;
   align-items: center;
-  flex-grow: 1; /* Take remaining space */
-  justify-content: space-between; /* Add this line */
+  /* Take remaining space */
+  flex-grow: 1;
+  justify-content: space-between;
 }
 
 .server-tab .server-name {
-  flex-shrink: 0; /* Avoid server name pushing server state to the right */
+  /* Avoid server name pushing server state to the right */
+  flex-shrink: 0;
   margin-right: 10px;
 }
 
 .server-tab .server-state {
-  margin-left: 10px; /* Adjust this value to your preference */
+  margin-left: 10px;
   margin-right: 10px;
 }
 

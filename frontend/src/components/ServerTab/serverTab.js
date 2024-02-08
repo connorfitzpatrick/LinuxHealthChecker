@@ -20,8 +20,8 @@ const ServerTab = ({ serverName, serverInfo }) => {
       </div>
       {expanded && (
         <div className="tab-details">
-          <p>{serverInfo.details}</p>
-          {/* Add more detailed information as needed */}
+          <p>Detailed Information About {serverName} Will Go Here</p>
+          {}
         </div>
       )}
     </div>

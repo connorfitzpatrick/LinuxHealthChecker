@@ -1,10 +1,39 @@
-table,
-td,
-th {
-  border: 1px solid;
+.table-holder {
+  /* Make table horizontally scrollable */
+  overflow-x: auto;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
+  font-family: Arial, sans-serif;
+  font-size: 0.9em;
+  border-radius: 8px;
+}
+
+th,
+td {
+  border: 1px solid #ddd;
+  text-align: left;
+  padding: 8px;
+}
+
+th {
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+/* Right-align for numerical columns */
+.numerical {
+  text-align: right;
+}
+
+.row-healthy {
+  background-color: #e6ffed;
+}
+
+.row-error {
+  background-color: #ffe6e6;
 }

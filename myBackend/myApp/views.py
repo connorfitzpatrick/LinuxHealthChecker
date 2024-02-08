@@ -90,7 +90,6 @@ def server_events(connection_id, connection_states):
             # Retrieve the server update from Redis
             cache_key = connection_id + "-" + server
             server_update = cache.get(cache_key)
-            print(server_update)
 
             if server_update and last_update < server_update['last_updated']:
                 event_data = {'server': server, 'status': server_update['status']}

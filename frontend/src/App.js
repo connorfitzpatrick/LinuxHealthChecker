@@ -47,7 +47,7 @@ const App = () => {
             operating_system_name: "",
           },
           inode_info: {
-            inode_health_status: "F",
+            inode_health_status: "",
             unhealthy_filesystems: [],
             inode_data: "",
           },

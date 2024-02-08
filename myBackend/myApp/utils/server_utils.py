@@ -99,10 +99,19 @@ def docker_get_host_port(container_name):
 
     except docker.errors.NotFound:
         print(f"Container '{container_name}' not found.")
+        return None
+
+def parse_operating_system_info(os_output):
+    os_pretty_name = ''
+    for line in os_output.split('\n'):
+        if line.startswith('PRETTY_NAME'):
+            os_pretty_name = line.split('=')[1].strip('"')
+            break
+    return os_pretty_name
+
 
 def parse_inode_health_results(inode_output):
     lines = inode_output[0].split('\n')
-    # print(lines)
     state = 'Healthy'
     unhealthy_filesystems = []
 
@@ -158,15 +167,17 @@ def parse_server_health_results(outputs):
     # Parsing logic will go here
     results = {}
 
+    # parse OS info
+    os_verion = parse_operating_system_info(outputs[0])
     # parse inode health
-    inode_health_results = parse_inode_health_results(outputs[0])
+    inode_health_results = parse_inode_health_results(outputs[1])
     # parse filesystem health
-    filesystem_health_results = parse_filesystem_health_results(outputs[1])
+    filesystem_health_results = parse_filesystem_health_results(outputs[2])
 
     results = {
         'overall_state': 'Healthy',
         'os_info': {
-            'operating_system_name': '',
+            'operating_system_name': os_verion,
         },
         'inode_info': {
             'inode_health_status': inode_health_results[0],
@@ -192,23 +203,48 @@ def process_server_health(server):
     hostname = 'localhost'
     username = 'remote_user'
     password = 'password1234'
+    
+    # Timeout after 40 seconds
+    connection_timeout = 10
+
     print(server)
 
     # for server in server_list:
     port = docker_get_host_port(server)
+    if not port: 
 
+        return {
+            'overall_state': 'Error',
+            'os_info': {
+                'operating_system_name': 'N/A',
+            },
+            'inode_info': {
+                'inode_health_status': 'N/A',
+                'unhealthy_filesystems': 'N/A',
+                'inode_data': 'N/A',
+            },
+            'filesystem_info': {
+                'filesystem_health_status': 'N/A',
+                'unhealthy_filesystems': 'N/A',
+                'filesystem_data': 'N/A',
+            },
+            'ntp_info': {
+                'ntp_health_status': 'N/A',
+            },
+        }
     # Create SSH client
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
     try:
         # Connect to the Docker container
-        client.connect(hostname, port=port, username=username, password=password)
+        client.connect(hostname, port=port, username=username, password=password, timeout=connection_timeout)
 
         # Run the 'df -i' command
         # command = 'df -i; cat /etc/os-release'
         # command = 'df -i'
         commands = (
+            'cat /etc/os-release',
             'df -i',
             'df -h',
         )
@@ -216,18 +252,22 @@ def process_server_health(server):
         command = '; echo "{}"; '.format(delimiter).join(commands) + '; echo "{}"'.format(delimiter)
         stdin, stdout, stderr = client.exec_command(command)
         output = stdout.read().decode('utf-8')
-        print("OUTPUT:")
-        print("")
 
         # Split output with delimiter to get a list of command outputs
-        # outputs[0] = inodes
-        # outputs[1] = filesystems
+        # outputs[1] = inodes
+        # outputs[2] = filesystems
         outputs = output.split(delimiter)
         # Strip each output to remove leading + trailing whitespace
         outputs = [o.strip() for o in outputs if o.strip()]
 
         # parse output
         results = parse_server_health_results(outputs)
+    except Exception as e:
+        print(f"Exception in when trying to connect for {server_name}: {e}")
+
+        results = {
+            'overall_state': 'Error',
+        }
     
     finally:
         # Close the SSH connection
