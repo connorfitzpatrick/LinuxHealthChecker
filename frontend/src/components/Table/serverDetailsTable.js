@@ -40,8 +40,8 @@ const ServerDetailsTable = ({ serverInfo }) => {
         <thead>
           <tr>
             <th>Hostname</th>
-            <th>Ping Status</th>
             <th>OS Version</th>
+            <th>Ping Status</th>
             <th>Inode Usage</th>
             <th>Filesystems</th>
             <th>CPU Usage</th>
@@ -51,28 +51,44 @@ const ServerDetailsTable = ({ serverInfo }) => {
           </tr>
         </thead>
         <tbody>
-          {serverInfo.map((server) => (
-            <tr
-              key={server.serverName}
-              className={
-                server.status.overall_state === "Healthy"
-                  ? "row-healthy"
-                  : server.status.overall_state === "Error"
-                  ? "row-error"
-                  : ""
-              }
-            >
-              <td>{server.serverName}</td>
-              <td>{server.status.overall_state}</td>
-              <td>{server.status.os_info.operating_system_name}</td>
-              <td>{server.status.inode_info.inode_health_status}</td>
-              <td>{server.status.filesystem_info.filesystem_health_status}</td>
-              <td>{}</td>
-              <td>{}</td>
-              <td>{}</td>
-              <td>{}</td>
-            </tr>
-          ))}
+          {serverInfo.map((server) => {
+            const overallState = server.status.overall_state;
+            const pingState = server.status.ping_status;
+            const filesystemStatus =
+              server.status.filesystem_info.filesystem_health_status;
+            const inodeStatus = server.status.inode_info.inode_health_status;
+
+            const rowClass = (() => {
+              if (pingState === "Healthy") return "row-healthy";
+              if (overallState === "Healthy") return "row-healthy";
+              if (overallState === "Error") return "row-error";
+              return "";
+            })();
+
+            const overallWarning = overallState === "Warning";
+            const filesystemWarning = filesystemStatus === "Warning";
+            const inodeWarning = inodeStatus === "Warning";
+
+            return (
+              <tr key={server.serverName} className={rowClass}>
+                <td className={overallWarning ? "cell-warning" : ""}>
+                  {server.serverName}
+                </td>
+                <td>{server.status.os_info.operating_system_name}</td>
+                <td>{server.status.ping_status}</td>
+                <td className={inodeWarning ? "cell-warning" : ""}>
+                  {inodeStatus}
+                </td>
+                <td className={filesystemWarning ? "cell-warning" : ""}>
+                  {filesystemStatus}
+                </td>
+                <td>{}</td>
+                <td>{}</td>
+                <td>{}</td>
+                <td>{}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

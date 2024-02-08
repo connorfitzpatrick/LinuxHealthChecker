@@ -63,7 +63,6 @@ def process_servers(request):
     ### POST ###
     if request.method == 'POST':
         # Extract UUID from header
-        print("POST")
         connection_id = request.META.get('HTTP_X_CONNECTION_ID')
 
         # Grab server list from request body
@@ -90,7 +89,6 @@ def process_servers(request):
     
     ### GET ###
     elif request.method == 'GET':
-        print("GET")
         # Extract UUID from header
         connection_id = request.GET.get('id')
         # Ensure connection_id was already initialized in the POST request
@@ -103,7 +101,6 @@ def process_servers(request):
         return JsonResponse({'message': 'Error: Request could not be processed'}, status=405)
 
 def server_events(connection_id, connection_states):
-    print("Server events")
     start_time = time.time()
     timeout = 120  # Timeout after 120 seconds of no updates
 

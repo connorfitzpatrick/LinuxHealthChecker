@@ -121,7 +121,7 @@ def parse_inode_health_results(inode_output):
         parts = line.split()
         filesystem = parts[0]
         iuse = int(parts[4][:-1])
-        if iuse >= 3:
+        if iuse >= 95:
             unhealthy_filesystems.append(line)
             state = 'Warning'
 
@@ -130,31 +130,20 @@ def parse_inode_health_results(inode_output):
     return (state, unhealthy_filesystems, inode_output)
 
 def parse_filesystem_health_results(filesystem_output):
-    print(filesystem_output)
-    lines = filesystem_output[1].split('\n')
-    print(lines)
+    lines = filesystem_output.strip().split('\n')
     state = 'Healthy'
+    parsed = []
     unhealthy_filesystems = []
+    unhealthy_filesystems.append(lines[0])
+    for line in lines[1:]:
+        parts = line.split()
+        filesystem = parts[0]
+        f_use = int(parts[4][:-1])
+        if f_use >= 95:
+            unhealthy_filesystems.append(line)
+            state = 'Warning'
 
-    # Skip header and interate through each filesystem.
-    for line in lines[1:-1]:
-    # Split each line into columns
-        columns = line.split()
-
-        if len(columns) >= 6:
-            fuse_percentage_str = columns[4].replace('%', '')
-            
-            try:
-                iuse_percentage = int(fuse_percentage_str)
-            except ValueError:
-                print(f"Error: Invalid FUse% value - {fuse_percentage_str}")
-                continue
-            if iuse_percentage >= 5:
-                print("WARNING")
-                unhealthy_filesystems.append([columns[0], columns[4]])
-                state = 'Warning'
-        else:
-            print("Error: Invalid 'df -h' output format")
+        parsed.append((filesystem, f_use))
     
     return (state, unhealthy_filesystems, filesystem_output)
 
@@ -167,6 +156,7 @@ def parse_server_health_results(outputs):
     # parse inode health
     inode_health_results = parse_inode_health_results(outputs[1])
     # parse filesystem health
+    print(outputs[2])
     filesystem_health_results = parse_filesystem_health_results(outputs[2])
 
     overall_health = 'Healthy'
@@ -175,6 +165,7 @@ def parse_server_health_results(outputs):
 
     results = {
         'overall_state': overall_health,
+        'ping_status': 'Healthy',
         'os_info': {
             'operating_system_name': os_verion,
         },
@@ -214,6 +205,7 @@ def process_server_health(server):
 
         return {
             'overall_state': 'Error',
+            'ping_status': 'Error',
             'os_info': {
                 'operating_system_name': 'N/A',
             },

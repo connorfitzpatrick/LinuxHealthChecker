@@ -37,3 +37,11 @@ th {
 .row-error {
   background-color: #ffe6e6;
 }
+
+.cell-warning {
+  background-color: #ffffe0; /* Light-yellow background */
+}
+
+.row-healthy td:not(.cell-warning) {
+  background-color: #e6ffed; /* Keep the rest of the row green */
+}
