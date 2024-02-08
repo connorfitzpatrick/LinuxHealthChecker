@@ -31,6 +31,7 @@ def process_server_health_thread(server_name, connection_id):
             'status': result,
             'last_updated': time.time(),
         }
+
         cache_key = connection_id + "-" + server_name
         # Update server_data in Redis
         cache.set(cache_key, data, timeout=None)
@@ -111,32 +112,25 @@ def parse_operating_system_info(os_output):
 
 
 def parse_inode_health_results(inode_output):
-    lines = inode_output[0].split('\n')
+    lines = inode_output.strip().split('\n')
     state = 'Healthy'
+    parsed = []
     unhealthy_filesystems = []
+    unhealthy_filesystems.append(lines[0])
+    for line in lines[1:]:
+        parts = line.split()
+        filesystem = parts[0]
+        iuse = int(parts[4][:-1])
+        if iuse >= 3:
+            unhealthy_filesystems.append(line)
+            state = 'Warning'
 
-    # Skip header and interate through each filesystem.
-    for line in lines[1:-1]:
-    # Split each line into columns
-        columns = line.split()
-
-        if len(columns) >= 6:
-            iuse_percentage_str = columns[4].replace('%', '')
-            
-            try:
-                iuse_percentage = int(iuse_percentage_str)
-            except ValueError:
-                print(f"Error: Invalid IUse% value - {iuse_percentage_str}")
-                continue
-            if iuse_percentage >= 95:
-                unhealthy_filesystems.append([columns[0], columns[4]])
-                state = 'Warning'
-        else:
-            print("Error: Invalid 'df -i' output format")
+        parsed.append((filesystem, iuse))
     
     return (state, unhealthy_filesystems, inode_output)
 
 def parse_filesystem_health_results(filesystem_output):
+    print(filesystem_output)
     lines = filesystem_output[1].split('\n')
     print(lines)
     state = 'Healthy'
@@ -155,7 +149,8 @@ def parse_filesystem_health_results(filesystem_output):
             except ValueError:
                 print(f"Error: Invalid FUse% value - {fuse_percentage_str}")
                 continue
-            if iuse_percentage >= 95:
+            if iuse_percentage >= 5:
+                print("WARNING")
                 unhealthy_filesystems.append([columns[0], columns[4]])
                 state = 'Warning'
         else:
@@ -174,8 +169,12 @@ def parse_server_health_results(outputs):
     # parse filesystem health
     filesystem_health_results = parse_filesystem_health_results(outputs[2])
 
+    overall_health = 'Healthy'
+    if inode_health_results[0] != 'Healthy':
+        overall_health = 'Warning'
+
     results = {
-        'overall_state': 'Healthy',
+        'overall_state': overall_health,
         'os_info': {
             'operating_system_name': os_verion,
         },
@@ -252,6 +251,7 @@ def process_server_health(server):
         command = '; echo "{}"; '.format(delimiter).join(commands) + '; echo "{}"'.format(delimiter)
         stdin, stdout, stderr = client.exec_command(command)
         output = stdout.read().decode('utf-8')
+
 
         # Split output with delimiter to get a list of command outputs
         # outputs[1] = inodes

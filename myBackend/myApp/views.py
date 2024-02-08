@@ -17,6 +17,8 @@ from .utils.server_utils import start_kafka_consumer, get_server_data
 from threading import Thread, Lock, current_thread
 from django.core.cache import cache
 import logging
+from kafka.admin import KafkaAdminClient, NewTopic
+
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(threadName)s] %(message)s')
 logger = logging.getLogger(__name__)
@@ -33,6 +35,26 @@ consumer_thread = Thread(target=start_kafka_consumer, daemon=True)
 # GLOBAL dictionary for maintaining the state of each connection with a unique ID 
 connection_states = {}
 
+# Create a Kafka topic if it doesn't exist
+def create_topic_if_not_exists():
+    admin_client = KafkaAdminClient(bootstrap_servers='localhost:9092')
+    topic_metadata = admin_client.list_topics()
+    
+    # Check if topic_metadata is a list
+    if isinstance(topic_metadata, list):
+        topic_names = set(topic_metadata)  # Convert list to set for easy membership check
+    else:
+        topic_names = topic_metadata.topics
+    
+    if topic_name not in topic_names:
+        print(f"Topic '{topic_name}' does not exist. Creating it...")
+        new_topic = NewTopic(name=topic_name, num_partitions=1, replication_factor=1)
+        admin_client.create_topics([new_topic])
+        print(f"Topic '{topic_name}' created successfully.")
+
+# Call function to create topic if not exists
+create_topic_if_not_exists()
+
 @csrf_exempt
 def process_servers(request):
     '''
@@ -41,6 +63,7 @@ def process_servers(request):
     ### POST ###
     if request.method == 'POST':
         # Extract UUID from header
+        print("POST")
         connection_id = request.META.get('HTTP_X_CONNECTION_ID')
 
         # Grab server list from request body
@@ -67,6 +90,7 @@ def process_servers(request):
     
     ### GET ###
     elif request.method == 'GET':
+        print("GET")
         # Extract UUID from header
         connection_id = request.GET.get('id')
         # Ensure connection_id was already initialized in the POST request
@@ -79,6 +103,7 @@ def process_servers(request):
         return JsonResponse({'message': 'Error: Request could not be processed'}, status=405)
 
 def server_events(connection_id, connection_states):
+    print("Server events")
     start_time = time.time()
     timeout = 120  # Timeout after 120 seconds of no updates
 
