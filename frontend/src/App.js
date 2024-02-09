@@ -43,23 +43,24 @@ const App = () => {
         serverName,
         status: {
           overall_state: "Loading",
+          ping_status: "",
           os_info: {
             operating_system_name: "",
           },
           inode_info: {
             inode_health_status: "",
-            unhealthy_filesystems: [],
+            inode_issues: [],
             inode_data: "",
           },
           filesystem_info: {
             filesystem_health_status: "",
-            unhealthy_filesystems: [],
+            filesystem_issues: [],
             filesystem_data: [],
           },
           ntp_info: {
             ntp_health_status: "",
           },
-          server_issues: [],
+          server_issues: {},
         },
       }));
       setResults(initialResults);

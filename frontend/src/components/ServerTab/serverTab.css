@@ -56,3 +56,34 @@
 .server-tab .tab-details {
   padding: 10px;
 }
+
+/* Adjustments for Warning state */
+.tab-details.warning {
+  text-align: left;
+}
+
+.tab-details.warning .problem-type {
+  margin-left: 20px;
+}
+
+.tab-details.warning .details-button {
+  background-color: rgb(187, 187, 4);
+  color: white;
+  margin: 20px auto;
+  display: block;
+}
+
+.tab-details.warning .details-button:hover {
+  background-color: rgb(148, 148, 0);
+}
+
+.tab-details.healthy .details-button {
+  background-color: green;
+  color: white;
+  margin: 20px auto;
+  display: block;
+}
+
+.tab-details.healthy .details-button:hover {
+  background-color: darkgreen;
+}

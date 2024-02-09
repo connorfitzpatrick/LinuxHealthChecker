@@ -18,8 +18,13 @@ textarea {
   border-radius: 5px;
 }
 
+textarea:focus {
+  border-color: green;
+}
+
 button {
-  background-color: #007bff;
+  /* background-color: #007bff; */
+  background-color: green;
   color: #fff;
   padding: 10px;
   border: none;
@@ -30,6 +35,7 @@ button {
   font-weight: bold;
 }
 
-button:hover {
-  background-color: #0056b3;
-}
+/* button:hover {
+  outline: none !important;
+  background-color: darkgreen;
+} */

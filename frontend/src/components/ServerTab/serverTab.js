@@ -18,18 +18,25 @@ const ServerTab = ({ serverName, serverInfo }) => {
       case "Warning":
         return (
           <>
-            {serverInfo.server_problems.map((problem, index) => (
-              <div key={index} className="problem-detail">
-                {problem}
+            {Object.keys(serverInfo.server_issues).map((issueType, index) => (
+              <div key={index} className="problem-type">
+                <h3>{issueType}:</h3>
+                {serverInfo.server_issues[issueType].map(
+                  (issue, innerIndex) => (
+                    <div key={innerIndex} className="problem-detail">
+                      {issue}
+                    </div>
+                  )
+                )}
               </div>
             ))}
-            <button className="details-button">See Details</button>
+            <button className="details-button warning">See Details</button>
           </>
         );
       case "Healthy":
         return (
           <>
-            <p>{serverName} appears healthy</p>
+            <p>{serverName} is Healthy!</p>
             <button className="details-button">See Details</button>
           </>
         );
@@ -45,9 +52,15 @@ const ServerTab = ({ serverName, serverInfo }) => {
           <span className="server-name">{serverName}</span>
           <span className="server-state">{serverInfo.overall_state}</span>
         </div>
-        <span className="expand-icon">{expanded ? "▼ " : "► "}</span>
+        <span className="expand-icon">{expanded ? "▼" : "►"}</span>
       </div>
-      {expanded && <div className="tab-details">{renderServerDetails()}</div>}
+      {expanded && (
+        <div
+          className={`tab-details ${serverInfo.overall_state.toLowerCase()}`}
+        >
+          {renderServerDetails()}
+        </div>
+      )}
     </div>
   );
 };

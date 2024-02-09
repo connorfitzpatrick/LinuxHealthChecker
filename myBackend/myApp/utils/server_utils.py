@@ -111,14 +111,15 @@ def parse_operating_system_info(os_output):
     return os_pretty_name
 
 
-def parse_inode_health_results(inode_output):
+def parse_inode_health_results(inode_output, server_name):
     lines = inode_output.strip().split('\n')
     state = 'Healthy'
     data = []
-    unhealthy_filesystems = []
-    unhealthy_filesystems.append(lines[0])
+    issues = []
     for line in lines[1:]:
         parts = line.split()
+        if server_name == "abcdefgh004":
+            parts[4] = "96%"
         inode_entry = {
             'Filesystem': parts[0],
             'Size': parts[1],
@@ -129,20 +130,21 @@ def parse_inode_health_results(inode_output):
         }
         if int(parts[4][:-1]) >= 95:
             state = 'Warning'
-            unhealthy_filesystems.append([parts[0], parts[4]])
+            issues.append("Inode usage in " + parts[0] + " is currently at " + parts[4])
         data.append(inode_entry)
     
-    return (state, unhealthy_filesystems, inode_output)
+    return (state, issues, inode_output)
 
-def parse_filesystem_health_results(filesystem_output):
+def parse_filesystem_health_results(filesystem_output, server_name):
     lines = filesystem_output.strip().split('\n')
     state = 'Healthy'
     data = []
-    unhealthy_filesystems = []
-    unhealthy_filesystems.append(lines[0])
+    issues = []
 
     for line in lines[1:]:
         parts = line.split()
+        if server_name == "abcdefgh004":
+            parts[4] = "96%"
         filesystem_entry = {
             'Filesystem': parts[0],
             'Size': parts[1],
@@ -153,27 +155,36 @@ def parse_filesystem_health_results(filesystem_output):
         }
         if int(parts[4][:-1]) >= 95:
             state = 'Warning'
-            unhealthy_filesystems.append([parts[0], parts[4]])
+            issues.append("Filesystem usage in " + parts[0] + " is currently at " + parts[4])
         data.append(filesystem_entry)
 
-    return (state, unhealthy_filesystems, data)
+    return (state, issues, data)
 
-def parse_server_health_results(outputs):
+def parse_server_health_results(outputs, server_name):
     # Parsing logic will go here
     results = {}
+    # Warning messages will go here
+    server_issues = {}
 
     # parse OS info
     os_verion = parse_operating_system_info(outputs[0])
     # parse inode health
-    inode_health_results = parse_inode_health_results(outputs[1])
+    inode_health_results = parse_inode_health_results(outputs[1], server_name)
     # parse filesystem health
-    # print(outputs[2])
-    filesystem_health_results = parse_filesystem_health_results(outputs[2])
+    filesystem_health_results = parse_filesystem_health_results(outputs[2], server_name)
 
     overall_health = 'Healthy'
     if inode_health_results[0] != 'Healthy':
         overall_health = 'Warning'
-        # maybe I can add to server_issues here?
+        print("xxxxx")
+        # server_issues['Inodes'].extend(inode_health_results[1])
+        server_issues['Inodes'] = inode_health_results[1]
+        print("yyyy")
+    if filesystem_health_results[0] != 'Healthy':
+        overall_health = 'Warning'
+        # server_issues['Filesystems'].extend(filesystem_health_results[1])
+        server_issues['Filesystems'] = filesystem_health_results[1]
+
 
     results = {
         'overall_state': overall_health,
@@ -183,23 +194,23 @@ def parse_server_health_results(outputs):
         },
         'inode_info': {
             'inode_health_status': inode_health_results[0],
-            'unhealthy_filesystems': inode_health_results[1],
+            'inode_issues': inode_health_results[1],
             'inode_data': inode_health_results[2],
         },
         'filesystem_info': {
             'filesystem_health_status': filesystem_health_results[0],
-            'unhealthy_filesystems': filesystem_health_results[1],
+            'filesystem_issues': filesystem_health_results[1],
             'filesystem_data': filesystem_health_results[2],
         },
         'ntp_info': {
             'ntp_health_status': '',
         },
-        'server_issues': []
+        'server_issues': server_issues
     }
 
     return results
 
-def process_server_health(server):
+def process_server_health(server_name):
     print("Starting the health check processing:")
 
     # Init SSH Connection Parameters
@@ -210,10 +221,8 @@ def process_server_health(server):
     # Timeout after 40 seconds
     connection_timeout = 10
 
-    print(server)
-
     # for server in server_list:
-    port = docker_get_host_port(server)
+    port = docker_get_host_port(server_name)
     if not port: 
 
         return {
@@ -224,18 +233,18 @@ def process_server_health(server):
             },
             'inode_info': {
                 'inode_health_status': '',
-                'unhealthy_filesystems': '',
+                'inode_issues': '',
                 'inode_data': '',
             },
             'filesystem_info': {
                 'filesystem_health_status': '',
-                'unhealthy_filesystems': '',
+                'filesystem_issues': '',
                 'filesystem_data': [],
             },
             'ntp_info': {
                 'ntp_health_status': '',
             },
-            'server_issues': [],
+            'server_issues': {},
         }
     # Create SSH client
     client = paramiko.SSHClient()
@@ -267,7 +276,7 @@ def process_server_health(server):
         outputs = [o.strip() for o in outputs if o.strip()]
 
         # parse output
-        results = parse_server_health_results(outputs)
+        results = parse_server_health_results(outputs, server_name)
     except Exception as e:
         print(f"Exception in when trying to connect for {server_name}: {e}")
 
