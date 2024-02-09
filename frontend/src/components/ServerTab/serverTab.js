@@ -1,12 +1,22 @@
 // ServerTab.js
 import React, { useState } from "react";
 import "./serverTab.css";
+import DetailsPopup from "../DetailsPopup/detailsPopup";
 
 const ServerTab = ({ serverName, serverInfo }) => {
   const [expanded, setExpanded] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
 
   const toggleExpand = () => {
     setExpanded(!expanded);
+  };
+
+  const handleDetailsButtonClick = () => {
+    setShowPopup(true);
+  };
+
+  const closePopup = () => {
+    setShowPopup(false);
   };
 
   const renderServerDetails = () => {
@@ -30,14 +40,24 @@ const ServerTab = ({ serverName, serverInfo }) => {
                 )}
               </div>
             ))}
-            <button className="details-button warning">See Details</button>
+            <button
+              className="details-button warning"
+              onClick={handleDetailsButtonClick}
+            >
+              See Details
+            </button>
           </>
         );
       case "Healthy":
         return (
           <>
             <p>{serverName} is Healthy!</p>
-            <button className="details-button">See Details</button>
+            <button
+              className="details-button"
+              onClick={handleDetailsButtonClick}
+            >
+              See Details
+            </button>
           </>
         );
       default:
@@ -61,33 +81,15 @@ const ServerTab = ({ serverName, serverInfo }) => {
           {renderServerDetails()}
         </div>
       )}
+      {showPopup && (
+        <DetailsPopup
+          serverName={serverName}
+          serverInfo={serverInfo}
+          onClose={closePopup}
+        />
+      )}
     </div>
   );
 };
 
 export default ServerTab;
-
-/* <table>
-            <thead>
-              <tr>
-                <th>Filesystem</th>
-                <th>Size</th>
-                <th>Used</th>
-                <th>Avail</th>
-                <th>Use%</th>
-                <th>Mounted on</th>
-              </tr>
-            </thead>
-            <tbody>
-              {serverInfo.filesystem_info.filesystem_data.map((fs, index) => (
-                <tr key={index}>
-                  <td>{fs.Filesystem}</td>
-                  <td>{fs.Size}</td>
-                  <td>{fs.Used}</td>
-                  <td>{fs.Avail}</td>
-                  <td>{fs["Use%"]}</td>
-                  <td>{fs.MountedOn}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table> */

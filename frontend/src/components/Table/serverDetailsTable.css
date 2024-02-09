@@ -39,9 +39,9 @@ th {
 }
 
 .cell-warning {
-  background-color: #ffffe0; /* Light-yellow background */
+  background-color: #ffffe0;
 }
 
 .row-healthy td:not(.cell-warning) {
-  background-color: #e6ffed; /* Keep the rest of the row green */
+  background-color: #e6ffed;
 }
