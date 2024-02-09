@@ -21,23 +21,23 @@ def get_server_data(server_name):
     return json.loads(data) if data else {}
 
 def process_server_health_thread(server_name, connection_id):
-    try:
-        print(f"Starting health check for {server_name}")
-        # Simulate the health check process
-        # result = {"status": "Healthy", "last_updated": time.time()}
-        result = process_server_health(server_name)
-        data = {
-            'server_name': server_name,
-            'status': result,
-            'last_updated': time.time(),
-        }
+    # try:
+    print(f"Starting health check for {server_name}")
+    # Simulate the health check process
+    # result = {"status": "Healthy", "last_updated": time.time()}
+    result = process_server_health(server_name)
+    data = {
+        'server_name': server_name,
+        'status': result,
+        'last_updated': time.time(),
+    }
 
-        cache_key = connection_id + "-" + server_name
-        # Update server_data in Redis
-        cache.set(cache_key, data, timeout=None)
-        print(f"Completed health check for {server_name}: {result}")
-    except Exception as e:
-        print(f"Exception in process_server_health_thread for {server_name}: {e}")
+    cache_key = connection_id + "-" + server_name
+    # Update server_data in Redis
+    cache.set(cache_key, data, timeout=None)
+    print(f"Completed health check for {server_name}: {result}")
+    # except Exception as e:
+    #     print(f"Exception in process_server_health_thread for {server_name}: {e}")
 
 
 def start_kafka_consumer():
@@ -114,38 +114,49 @@ def parse_operating_system_info(os_output):
 def parse_inode_health_results(inode_output):
     lines = inode_output.strip().split('\n')
     state = 'Healthy'
-    parsed = []
+    data = []
     unhealthy_filesystems = []
     unhealthy_filesystems.append(lines[0])
     for line in lines[1:]:
         parts = line.split()
-        filesystem = parts[0]
-        iuse = int(parts[4][:-1])
-        if iuse >= 95:
-            unhealthy_filesystems.append(line)
+        inode_entry = {
+            'Filesystem': parts[0],
+            'Size': parts[1],
+            'Used': parts[2],
+            'Avail': parts[3],
+            'Use%': parts[4],
+            'MountedOn': parts[5],
+        }
+        if int(parts[4][:-1]) >= 95:
             state = 'Warning'
-
-        parsed.append((filesystem, iuse))
+            unhealthy_filesystems.append([parts[0], parts[4]])
+        data.append(inode_entry)
     
     return (state, unhealthy_filesystems, inode_output)
 
 def parse_filesystem_health_results(filesystem_output):
     lines = filesystem_output.strip().split('\n')
     state = 'Healthy'
-    parsed = []
+    data = []
     unhealthy_filesystems = []
     unhealthy_filesystems.append(lines[0])
+
     for line in lines[1:]:
         parts = line.split()
-        filesystem = parts[0]
-        f_use = int(parts[4][:-1])
-        if f_use >= 95:
-            unhealthy_filesystems.append(line)
+        filesystem_entry = {
+            'Filesystem': parts[0],
+            'Size': parts[1],
+            'Used': parts[2],
+            'Avail': parts[3],
+            'Use%': parts[4],
+            'MountedOn': parts[5],
+        }
+        if int(parts[4][:-1]) >= 95:
             state = 'Warning'
+            unhealthy_filesystems.append([parts[0], parts[4]])
+        data.append(filesystem_entry)
 
-        parsed.append((filesystem, f_use))
-    
-    return (state, unhealthy_filesystems, filesystem_output)
+    return (state, unhealthy_filesystems, data)
 
 def parse_server_health_results(outputs):
     # Parsing logic will go here
@@ -156,12 +167,13 @@ def parse_server_health_results(outputs):
     # parse inode health
     inode_health_results = parse_inode_health_results(outputs[1])
     # parse filesystem health
-    print(outputs[2])
+    # print(outputs[2])
     filesystem_health_results = parse_filesystem_health_results(outputs[2])
 
     overall_health = 'Healthy'
     if inode_health_results[0] != 'Healthy':
         overall_health = 'Warning'
+        # maybe I can add to server_issues here?
 
     results = {
         'overall_state': overall_health,
@@ -182,6 +194,7 @@ def parse_server_health_results(outputs):
         'ntp_info': {
             'ntp_health_status': '',
         },
+        'server_issues': []
     }
 
     return results
@@ -207,21 +220,22 @@ def process_server_health(server):
             'overall_state': 'Error',
             'ping_status': 'Error',
             'os_info': {
-                'operating_system_name': 'N/A',
+                'operating_system_name': '',
             },
             'inode_info': {
-                'inode_health_status': 'N/A',
-                'unhealthy_filesystems': 'N/A',
-                'inode_data': 'N/A',
+                'inode_health_status': '',
+                'unhealthy_filesystems': '',
+                'inode_data': '',
             },
             'filesystem_info': {
-                'filesystem_health_status': 'N/A',
-                'unhealthy_filesystems': 'N/A',
-                'filesystem_data': 'N/A',
+                'filesystem_health_status': '',
+                'unhealthy_filesystems': '',
+                'filesystem_data': [],
             },
             'ntp_info': {
-                'ntp_health_status': 'N/A',
+                'ntp_health_status': '',
             },
+            'server_issues': [],
         }
     # Create SSH client
     client = paramiko.SSHClient()

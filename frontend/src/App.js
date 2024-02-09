@@ -54,11 +54,12 @@ const App = () => {
           filesystem_info: {
             filesystem_health_status: "",
             unhealthy_filesystems: [],
-            filesystem_data: "",
+            filesystem_data: [],
           },
           ntp_info: {
             ntp_health_status: "",
           },
+          server_issues: [],
         },
       }));
       setResults(initialResults);
