@@ -118,7 +118,7 @@ def parse_inode_health_results(inode_output, server_name):
     issues = []
     for line in lines[1:]:
         parts = line.split()
-        if server_name == "abcdefgh004":
+        if server_name == "abcdefgh004" and parts[0] == "shm":
             parts[4] = "96%"
         inode_entry = {
             'Filesystem': parts[0],
@@ -133,7 +133,7 @@ def parse_inode_health_results(inode_output, server_name):
             issues.append("Inode usage in " + parts[0] + " is currently at " + parts[4])
         data.append(inode_entry)
     
-    return (state, issues, inode_output)
+    return (state, issues, data)
 
 def parse_filesystem_health_results(filesystem_output, server_name):
     lines = filesystem_output.strip().split('\n')
@@ -143,7 +143,7 @@ def parse_filesystem_health_results(filesystem_output, server_name):
 
     for line in lines[1:]:
         parts = line.split()
-        if server_name == "abcdefgh004":
+        if server_name == "abcdefgh004" and parts[0] == "/dev/vda1":
             parts[4] = "96%"
         filesystem_entry = {
             'Filesystem': parts[0],
@@ -159,6 +159,10 @@ def parse_filesystem_health_results(filesystem_output, server_name):
         data.append(filesystem_entry)
 
     return (state, issues, data)
+
+def parse_server_logs(log_output):
+    lines = log_output.strip().split('\n')
+    return lines
 
 def parse_server_health_results(outputs, server_name):
     # Parsing logic will go here
@@ -176,10 +180,8 @@ def parse_server_health_results(outputs, server_name):
     overall_health = 'Healthy'
     if inode_health_results[0] != 'Healthy':
         overall_health = 'Warning'
-        print("xxxxx")
         # server_issues['Inodes'].extend(inode_health_results[1])
         server_issues['Inodes'] = inode_health_results[1]
-        print("yyyy")
     if filesystem_health_results[0] != 'Healthy':
         overall_health = 'Warning'
         # server_issues['Filesystems'].extend(filesystem_health_results[1])
@@ -205,7 +207,8 @@ def parse_server_health_results(outputs, server_name):
         'ntp_info': {
             'ntp_health_status': '',
         },
-        'server_issues': server_issues
+        'server_issues': server_issues,
+        'logs': parse_server_logs(outputs[3]),
     }
 
     return results
@@ -245,6 +248,7 @@ def process_server_health(server_name):
                 'ntp_health_status': '',
             },
             'server_issues': {},
+            'logs': [],
         }
     # Create SSH client
     client = paramiko.SSHClient()
@@ -261,6 +265,8 @@ def process_server_health(server_name):
             'cat /etc/os-release',
             'df -i',
             'df -h',
+            'tail -n 70 /var/log/dpkg.log'
+
         )
         delimiter = "END_OF_COMMAND_OUTPUT"
         command = '; echo "{}"; '.format(delimiter).join(commands) + '; echo "{}"'.format(delimiter)

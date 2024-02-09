@@ -40,6 +40,14 @@ const ServerTab = ({ serverName, serverInfo }) => {
                 )}
               </div>
             ))}
+            <div className="problem-type">
+              <h3>Logs:</h3>
+              {serverInfo.logs.map((issue, index) => (
+                <div key={index} className="problem-detail">
+                  {issue}
+                </div>
+              ))}
+            </div>
             <button
               className="details-button warning"
               onClick={handleDetailsButtonClick}

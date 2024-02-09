@@ -13,15 +13,24 @@
 
 .popup-container {
   width: 80%;
+  height: 95%;
   background-color: white;
   display: flex;
   overflow: hidden;
+  max-height: 90vh;
 }
 
 .side-menu {
   width: 20%;
   background-color: #f0f0f0;
   padding: 10px;
+}
+
+.server-name-header {
+  padding: 15px;
+  border-bottom: 2px solid #ddd;
+  background-color: #f0f0f0;
+  font-weight: bold;
 }
 
 .menu-item {
@@ -34,7 +43,29 @@
   background-color: #e7e7e7;
 }
 
+.content-container {
+  width: 80%;
+}
+
 .content-area {
   flex-grow: 1;
   padding: 20px;
+  text-align: left;
+  overflow-y: auto;
+  max-height: 73vh;
+}
+
+h1 {
+  text-align: center;
+}
+
+hr {
+  border: 0;
+  height: 1px;
+  background-image: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0),
+    rgba(0, 0, 0, 0.75),
+    rgba(0, 0, 0, 0)
+  );
 }

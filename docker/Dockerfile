@@ -4,6 +4,7 @@ RUN mkdir -p /var/run/sshd
 
 # Install dropbear SSH server
 RUN apt-get update && \
+    apt-get install -y sysstat && \
     apt-get install -y openjdk-8-jdk && \
     apt-get install -y openssh-server sudo
 

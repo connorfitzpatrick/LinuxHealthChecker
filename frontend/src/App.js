@@ -50,7 +50,7 @@ const App = () => {
           inode_info: {
             inode_health_status: "",
             inode_issues: [],
-            inode_data: "",
+            inode_data: [],
           },
           filesystem_info: {
             filesystem_health_status: "",
@@ -61,6 +61,7 @@ const App = () => {
             ntp_health_status: "",
           },
           server_issues: {},
+          logs: [],
         },
       }));
       setResults(initialResults);
