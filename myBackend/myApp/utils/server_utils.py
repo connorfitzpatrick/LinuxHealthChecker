@@ -110,7 +110,6 @@ def parse_operating_system_info(os_output):
             break
     return os_pretty_name
 
-
 def parse_inode_health_results(inode_output, server_name):
     lines = inode_output.strip().split('\n')
     state = 'Healthy'
@@ -160,6 +159,31 @@ def parse_filesystem_health_results(filesystem_output, server_name):
 
     return (state, issues, data)
 
+def parse_cpu_usage_health_results(cpu_usage_output):
+    lines = cpu_usage_output.strip().split('\n')
+    state = 'Healthy'
+    data = []
+    issues = []
+
+    for line in lines[3:]:
+        parts = line.split()
+        cpu_usage_entry = {
+            'Time': parts[0],
+            'CPU': parts[1],
+            'User': parts[2],
+            'Nice': parts[3],
+            'System': parts[4],
+            'Iowait': parts[5],
+            'Steal': parts[6],
+            'Idle': parts[7],
+        }
+        if int(float(parts[7][:-1])) <= 5:
+            state = 'Warning'
+            issues.append("Only " + parts[7][:-1] + "% of the CPU is idle")
+        data.append(cpu_usage_entry)
+
+    return (state, issues, data)
+
 def parse_server_logs(log_output):
     lines = log_output.strip().split('\n')
     return lines
@@ -176,6 +200,8 @@ def parse_server_health_results(outputs, server_name):
     inode_health_results = parse_inode_health_results(outputs[1], server_name)
     # parse filesystem health
     filesystem_health_results = parse_filesystem_health_results(outputs[2], server_name)
+    # parse cpu_usage health
+    cpu_usage_health_results = parse_cpu_usage_health_results(outputs[3])
 
     overall_health = 'Healthy'
     if inode_health_results[0] != 'Healthy':
@@ -186,7 +212,9 @@ def parse_server_health_results(outputs, server_name):
         overall_health = 'Warning'
         # server_issues['Filesystems'].extend(filesystem_health_results[1])
         server_issues['Filesystems'] = filesystem_health_results[1]
-
+    if cpu_usage_health_results[0] != 'Healthy':
+        overall_health = 'Warning'
+        server_issues['CPU Usage'] = cpu_usage_health_results[1]
 
     results = {
         'overall_state': overall_health,
@@ -204,11 +232,16 @@ def parse_server_health_results(outputs, server_name):
             'filesystem_issues': filesystem_health_results[1],
             'filesystem_data': filesystem_health_results[2],
         },
+        'cpu_use_info': {
+            'cpu_use_health_status': cpu_usage_health_results[0],
+            'cpu_use_issues': cpu_usage_health_results[1],
+            'cpu_use_data': cpu_usage_health_results[2],
+        },
         'ntp_info': {
             'ntp_health_status': '',
         },
         'server_issues': server_issues,
-        'logs': parse_server_logs(outputs[3]),
+        'logs': parse_server_logs(outputs[4]),
     }
 
     return results
@@ -244,6 +277,11 @@ def process_server_health(server_name):
                 'filesystem_issues': '',
                 'filesystem_data': [],
             },
+            'cpu_use_info': {
+                'cpu_use_health_status': '',
+                'cpu_use_issues': '',
+                'cpu_use_data': '',
+            },
             'ntp_info': {
                 'ntp_health_status': '',
             },
@@ -265,6 +303,7 @@ def process_server_health(server_name):
             'cat /etc/os-release',
             'df -i',
             'df -h',
+            'sar -u 2 5',
             'tail -n 70 /var/log/dpkg.log'
 
         )

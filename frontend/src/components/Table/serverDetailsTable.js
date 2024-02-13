@@ -57,6 +57,8 @@ const ServerDetailsTable = ({ serverInfo }) => {
             const filesystemStatus =
               server.status.filesystem_info.filesystem_health_status;
             const inodeStatus = server.status.inode_info.inode_health_status;
+            const cpuUseStatus =
+              server.status.cpu_use_info.cpu_use_health_status;
 
             const rowClass = (() => {
               if (pingState === "Healthy") return "row-healthy";
@@ -68,6 +70,7 @@ const ServerDetailsTable = ({ serverInfo }) => {
             const overallWarning = overallState === "Warning";
             const filesystemWarning = filesystemStatus === "Warning";
             const inodeWarning = inodeStatus === "Warning";
+            const cpuUseWarning = cpuUseStatus == "Warning";
 
             return (
               <tr key={server.serverName} className={rowClass}>
@@ -82,7 +85,9 @@ const ServerDetailsTable = ({ serverInfo }) => {
                 <td className={filesystemWarning ? "cell-warning" : ""}>
                   {filesystemStatus}
                 </td>
-                <td>{}</td>
+                <td className={cpuUseWarning ? "cell-warning" : ""}>
+                  {cpuUseStatus}
+                </td>
                 <td>{}</td>
                 <td>{}</td>
                 <td>{}</td>

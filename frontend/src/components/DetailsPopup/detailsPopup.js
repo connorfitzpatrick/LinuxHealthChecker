@@ -91,6 +91,41 @@ const DetailsPopup = ({ serverName, serverInfo, onClose }) => {
             </table>
           </>
         );
+      case "CPU Usage":
+        return (
+          <>
+            {issues &&
+              issues.map((issue, index) => <div key={index}>{issue}</div>)}
+            <table>
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>CPU</th>
+                  <th>%user</th>
+                  <th>%nice</th>
+                  <th>%system</th>
+                  <th>%iowait</th>
+                  <th>%steal</th>
+                  <th>%idle</th>
+                </tr>
+              </thead>
+              <tbody>
+                {serverInfo.cpu_use_info.cpu_use_data.map((cpu, index) => (
+                  <tr key={index}>
+                    <td>{cpu.Time}</td>
+                    <td>{cpu.CPU}</td>
+                    <td>{cpu.User}</td>
+                    <td>{cpu.Nice}</td>
+                    <td>{cpu.System}</td>
+                    <td>{cpu.Iowait}</td>
+                    <td>{cpu.Steal}</td>
+                    <td>{cpu.Idle}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        );
       case "Logs":
         return (
           <>

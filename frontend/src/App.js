@@ -57,6 +57,11 @@ const App = () => {
             filesystem_issues: [],
             filesystem_data: [],
           },
+          cpu_use_info: {
+            cpu_use_health_status: "",
+            cpu_use_issues: [],
+            cpu_use_data: [],
+          },
           ntp_info: {
             ntp_health_status: "",
           },
