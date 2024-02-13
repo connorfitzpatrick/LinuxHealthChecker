@@ -42,7 +42,8 @@ def create_topic_if_not_exists():
     
     # Check if topic_metadata is a list
     if isinstance(topic_metadata, list):
-        topic_names = set(topic_metadata)  # Convert list to set for easy membership check
+        # Convert list to set for easy membership check
+        topic_names = set(topic_metadata)
     else:
         topic_names = topic_metadata.topics
     
@@ -84,6 +85,7 @@ def process_servers(request):
             message = json.dumps({'connection_id': connection_id, 'server': server})
             producer.produce(topic_name, message)
             producer.flush()
+            print("1. Flushing")
 
         return JsonResponse({'message': 'Server processing started'}, status=200)
     

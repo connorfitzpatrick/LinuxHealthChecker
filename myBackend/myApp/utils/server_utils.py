@@ -63,7 +63,6 @@ def start_kafka_consumer():
             if msg.error():
                 print(f"Consumer error: {msg.error()}")
                 continue
-
             # Decode the message value from bytes to string, then load it as JSON
             message_data = json.loads(msg.value().decode('utf-8'))
             connection_id = message_data['connection_id']
@@ -247,8 +246,6 @@ def parse_server_health_results(outputs, server_name):
     return results
 
 def process_server_health(server_name):
-    print("Starting the health check processing:")
-
     # Init SSH Connection Parameters
     hostname = 'localhost'
     username = 'remote_user'
