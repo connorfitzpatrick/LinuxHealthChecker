@@ -11,12 +11,14 @@ textarea {
   padding: 8px;
   margin-bottom: 16px;
   box-sizing: border-box;
-  /* Allow vertical resizing of the textarea */
-  resize: vertical;
   font-size: 14px;
   font-family: "Arial";
   border: 1px solid #ccc;
   border-radius: 5px;
+  /* Allow vertical resizing of the textarea */
+  resize: vertical;
+  min-height: 100px;
+  max-height: 400px;
 }
 
 textarea:focus {
@@ -36,7 +38,7 @@ button {
   font-weight: bold;
 }
 
-/* button:hover {
+button:hover {
   outline: none !important;
   background-color: darkgreen;
-} */
+}

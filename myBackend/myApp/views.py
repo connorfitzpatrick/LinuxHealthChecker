@@ -85,7 +85,6 @@ def process_servers(request):
             message = json.dumps({'connection_id': connection_id, 'server': server})
             producer.produce(topic_name, message)
             producer.flush()
-            print("1. Flushing")
 
         return JsonResponse({'message': 'Server processing started'}, status=200)
     
