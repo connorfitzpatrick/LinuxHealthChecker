@@ -11,7 +11,14 @@ import logging
 from threading import current_thread
 from django.core.cache import cache
 import json
-from django.core.cache import cache
+
+# TO DO: User Authentication
+# Uptime; 
+# Patching Information
+# Running Services Check (Running within thresholds)
+#   -- Should check ntp and chrony
+# Network Interface Check
+# IDs of users logged into system (Can I do this without root? Can Sudo be used?)
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(threadName)s] %(message)s')
 logger = logging.getLogger(__name__)
@@ -196,11 +203,12 @@ def parse_server_health_results(outputs, server_name):
     # parse OS info
     os_verion = parse_operating_system_info(outputs[0])
     # parse inode health
-    inode_health_results = parse_inode_health_results(outputs[1], server_name)
+    # TODO: Parse uptime
+    inode_health_results = parse_inode_health_results(outputs[2], server_name)
     # parse filesystem health
-    filesystem_health_results = parse_filesystem_health_results(outputs[2], server_name)
+    filesystem_health_results = parse_filesystem_health_results(outputs[3], server_name)
     # parse cpu_usage health
-    cpu_usage_health_results = parse_cpu_usage_health_results(outputs[3])
+    cpu_usage_health_results = parse_cpu_usage_health_results(outputs[4])
 
     overall_health = 'Healthy'
     if inode_health_results[0] != 'Healthy':
@@ -215,6 +223,7 @@ def parse_server_health_results(outputs, server_name):
         overall_health = 'Warning'
         server_issues['CPU Usage'] = cpu_usage_health_results[1]
 
+    # NETWORK: `sar -n EDEV | grep -i average`
     results = {
         'overall_state': overall_health,
         'ping_status': 'Healthy',
@@ -298,10 +307,11 @@ def process_server_health(server_name):
         # command = 'df -i'
         commands = (
             'cat /etc/os-release',
+            'uptime',
             'df -i',
             'df -h',
             'sar -u 2 5',
-            'tail -n 70 /var/log/dpkg.log'
+            'tail -n 70 /var/log/dpkg.log',
 
         )
         delimiter = "END_OF_COMMAND_OUTPUT"
@@ -319,6 +329,10 @@ def process_server_health(server_name):
 
         # parse output
         results = parse_server_health_results(outputs, server_name)
+    except paramiko.ssh_exception.NoValidConnectionsError:
+        print(f'Unable to connect to {server_name} on port 22')
+    except paramiko.AuthenticationException:
+        print(f'Authentication failed for {server_name}')
     except Exception as e:
         print(f"Exception in when trying to connect for {server_name}: {e}")
 
