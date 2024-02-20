@@ -77,7 +77,7 @@ const ServerDetailsTable = ({ serverInfo }) => {
                 <td className={overallWarning ? "cell-warning" : ""}>
                   {server.serverName}
                 </td>
-                <td>{server.status.os_info.operating_system_name}</td>
+                <td>{server.status.general_info.operating_system_name}</td>
                 <td>{server.status.ping_status}</td>
                 <td className={inodeWarning ? "cell-warning" : ""}>
                   {inodeStatus}
@@ -89,7 +89,7 @@ const ServerDetailsTable = ({ serverInfo }) => {
                   {cpuUseStatus}
                 </td>
                 <td>{}</td>
-                <td>{}</td>
+                <td>{server.status.general_info.users}</td>
                 <td>{}</td>
               </tr>
             );

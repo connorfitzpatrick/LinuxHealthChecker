@@ -6,6 +6,7 @@ const DetailsPopup = ({ serverName, serverInfo, onClose }) => {
   const [selectedMenuItem, setSelectedMenuItem] = useState("Filesystems");
 
   const menuItems = [
+    "General",
     "Filesystems",
     "Inodes",
     "CPU Usage",
@@ -27,6 +28,8 @@ const DetailsPopup = ({ serverName, serverInfo, onClose }) => {
   const renderContent = () => {
     const issues = serverInfo.server_issues[selectedMenuItem];
     switch (selectedMenuItem) {
+      case "General":
+        return <h1>General</h1>;
       case "Filesystems":
         return (
           <>

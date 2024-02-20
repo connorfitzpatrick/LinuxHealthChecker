@@ -44,7 +44,11 @@ const App = () => {
         status: {
           overall_state: "Loading",
           ping_status: "",
-          os_info: {
+          general_info: {
+            date: "",
+            uptime: "",
+            users: "",
+            load_average: "",
             operating_system_name: "",
           },
           inode_info: {

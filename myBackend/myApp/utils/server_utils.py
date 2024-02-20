@@ -108,13 +108,31 @@ def docker_get_host_port(container_name):
         print(f"Container '{container_name}' not found.")
         return None
 
-def parse_operating_system_info(os_output):
+def parse_general_info(general_output):
+    lines = general_output.strip().split('\n')
+    
+    # parse date information
+    date = lines[0]
+
+    # parse uptime
+    uptime_line = lines[1]
+    uptime_start_index = uptime_line.find('up ') + len('up')
+    uptime_end_index = uptime_line.find(',')
+    uptime = uptime_line[uptime_start_index:uptime_end_index].strip()
+
+    # parse users
+    users = uptime_line.split(',')[1].strip().split()[0]
+
+    # parse load averages
+    load_averages = uptime_line.split(': ')[-1].strip()
+
+    # parse OS information
     os_pretty_name = ''
-    for line in os_output.split('\n'):
+    for line in lines[2:]:
         if line.startswith('PRETTY_NAME'):
             os_pretty_name = line.split('=')[1].strip('"')
             break
-    return os_pretty_name
+    return (date, uptime, users, load_averages, os_pretty_name)
 
 def parse_inode_health_results(inode_output, server_name):
     lines = inode_output.strip().split('\n')
@@ -204,6 +222,9 @@ def parse_server_health_results(outputs, server_name):
     os_verion = parse_operating_system_info(outputs[0])
     # parse inode health
     # TODO: Parse uptime
+
+    general_server_info = parse_general_info(outputs[1])
+
     inode_health_results = parse_inode_health_results(outputs[2], server_name)
     # parse filesystem health
     filesystem_health_results = parse_filesystem_health_results(outputs[3], server_name)
@@ -227,9 +248,12 @@ def parse_server_health_results(outputs, server_name):
     results = {
         'overall_state': overall_health,
         'ping_status': 'Healthy',
-        'uptime': outputs[1],
-        'os_info': {
-            'operating_system_name': os_verion,
+        'general_info': {
+            'date': general_server_info[0],
+            'uptime': general_server_info[1],
+            'users': general_server_info[2],
+            'load_average': general_server_info[3],
+            'operating_system_name': general_server_info[4],
         },
         'inode_info': {
             'inode_health_status': inode_health_results[0],
@@ -250,7 +274,7 @@ def parse_server_health_results(outputs, server_name):
             'ntp_health_status': '',
         },
         'server_issues': server_issues,
-        'logs': parse_server_logs(outputs[4]),
+        'logs': parse_server_logs(outputs[5]),
     }
 
     return results
@@ -271,8 +295,11 @@ def process_server_health(server_name):
         return {
             'overall_state': 'Error',
             'ping_status': 'Error',
-            'uptime': '',
-            'os_info': {
+            'general_info': {
+                'date': '',
+                'uptime': '',
+                'users': '',
+                'load_average': '',
                 'operating_system_name': '',
             },
             'inode_info': {
@@ -309,7 +336,7 @@ def process_server_health(server_name):
         # command = 'df -i'
         commands = (
             'cat /etc/os-release',
-            'uptime',
+            'date; uptime; cat /etc/os-release',
             'df -i',
             'df -h',
             'sar -u 2 5',
