@@ -1,6 +1,6 @@
 Run backend by cding into myBackend and running:
 
-- `python manage.py runserver`
+- `python manage.py runserver 8000`
 
 Run frontend by cding into frontend and running:
 

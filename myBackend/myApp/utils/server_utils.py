@@ -227,6 +227,7 @@ def parse_server_health_results(outputs, server_name):
     results = {
         'overall_state': overall_health,
         'ping_status': 'Healthy',
+        'uptime': outputs[1],
         'os_info': {
             'operating_system_name': os_verion,
         },
@@ -270,6 +271,7 @@ def process_server_health(server_name):
         return {
             'overall_state': 'Error',
             'ping_status': 'Error',
+            'uptime': '',
             'os_info': {
                 'operating_system_name': '',
             },
