@@ -6,7 +6,8 @@ RUN mkdir -p /var/run/sshd
 RUN apt-get update && \
     apt-get install -y sysstat && \
     apt-get install -y openjdk-8-jdk && \
-    apt-get install -y openssh-server sudo
+    apt-get install -y openssh-server sudo && \
+    apt-get install -y net-tools
 
 RUN useradd -rm -d /home/remote_user -s /bin/bash remote_user && \
     echo 'remote_user:password1234' | chpasswd && \
