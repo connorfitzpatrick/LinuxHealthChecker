@@ -21,6 +21,10 @@ Kafka:
 - `cd downloads/kafka_2.13-3.6.1`
 - `bin/kafka-server-start.sh config/server.properties`
 
+To see updates to kafka message_queue:
+
+- `./bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic message_queue --from-beginning`
+
 Set up Docker containers by cding into docker and running:
 
 - `docker run -p 58897:22 server1`
