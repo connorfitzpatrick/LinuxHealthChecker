@@ -219,7 +219,6 @@ def parse_server_health_results(outputs, server_name):
     server_issues = {}
 
     # parse OS info
-    os_verion = parse_operating_system_info(outputs[0])
     # parse inode health
     # TODO: Parse uptime
 
