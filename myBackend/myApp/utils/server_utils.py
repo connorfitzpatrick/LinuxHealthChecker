@@ -121,7 +121,7 @@ def parse_general_info(general_output):
     uptime = uptime_line[uptime_start_index:uptime_end_index].strip()
 
     # parse users
-    users = uptime_line.split(',')[1].strip().split()[0]
+    users = uptime_line.split(',')[2].strip().split()[0]
 
     # parse load averages
     load_averages = uptime_line.split(': ')[-1].strip()
