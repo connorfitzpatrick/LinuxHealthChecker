@@ -1,3 +1,8 @@
+# LinuxHealthChecker
+
+<b>Click image below to see a video demo</b>
+[![Link to demo](https://i3.ytimg.com/vi/kXw7RQbEW0M/maxresdefault.jpg)](https://www.youtube.com/watch?v=kXw7RQbEW0M)
+
 Run backend by cding into myBackend and running:
 
 - `python manage.py runserver 8000`
